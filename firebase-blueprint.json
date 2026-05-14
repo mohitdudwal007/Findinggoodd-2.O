@@ -30,9 +30,24 @@
         "updatedAt": { "type": "number", "description": "Timestamp" }
       },
       "required": ["title", "message", "status", "createdAt", "updatedAt"]
+    },
+    "page": {
+      "title": "Page",
+      "description": "Represents a generic site page (e.g. Terms & Conditions).",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "updatedAt": { "type": "number", "description": "Timestamp" }
+      },
+      "required": ["title", "content", "updatedAt"]
     }
   },
   "firestore": {
+    "/pages/{pageId}": {
+      "schema": { "$ref": "page" },
+      "description": "Stores site pages."
+    },
     "/movies/{movieId}": {
       "schema": { "$ref": "movie" },
       "description": "Stores all movie records."

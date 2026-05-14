@@ -34,6 +34,13 @@ service cloud.firestore {
         && data.updatedAt is timestamp;
     }
 
+    function isValidPage(data) {
+       return data.keys().hasAll(['title', 'content', 'updatedAt'])
+         && data.title is string && data.title.size() > 0 && data.title.size() <= 100
+         && data.content is string && data.content.size() <= 50000
+         && data.updatedAt is timestamp;
+    }
+
     match /movies/{movieId} {
       allow read: if true;
       allow create: if isAdmin() && isValidId(movieId) && isValidMovie(incoming()) && incoming().keys().size() == 10 && incoming().createdAt == request.time && incoming().updatedAt == request.time;
@@ -52,6 +59,15 @@ service cloud.firestore {
         && incoming().createdAt == existing().createdAt
         && incoming().updatedAt == request.time;
       allow delete: if isAdmin() && isValidId(requestId);
+    }
+
+    match /pages/{pageId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidId(pageId) && isValidPage(incoming()) && incoming().keys().size() == 3 && incoming().updatedAt == request.time;
+      allow update: if isAdmin() && isValidId(pageId) && isValidPage(incoming())
+        && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'content', 'updatedAt'])
+        && incoming().updatedAt == request.time;
+      allow delete: if isAdmin() && isValidId(pageId);
     }
   }
 }

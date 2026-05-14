@@ -155,10 +155,15 @@ const Navbar = ({
       </div>
       
       <div className="flex-1 flex justify-end">
-        <div className={`flex items-center transition-all duration-300 ease-in-out ${isSearchOpen ? 'w-full md:w-96 bg-[#111] border border-white/10 rounded-none px-4 py-2' : 'w-auto'}`}>
+        <motion.div 
+          layout
+          initial={false}
+          transition={{ type: "spring", stiffness: 500, damping: 35 }}
+          className={`flex items-center overflow-hidden ${isSearchOpen ? 'w-full md:w-96 bg-[#111] border border-white/10 rounded-none px-4 py-2' : 'w-auto h-auto'}`}
+        >
           <button 
             onClick={() => setIsSearchOpen(!isSearchOpen)}
-            className={`${isSearchOpen ? 'text-white' : 'text-white/50 hover:text-white'} transition-colors mt-1`}
+            className={`${isSearchOpen ? 'text-white shrink-0' : 'text-white/50 hover:text-white shrink-0'} transition-colors mt-1`}
           >
             {isSearchOpen ? <X size={18} strokeWidth={2} /> : <Search size={20} strokeWidth={2} />}
           </button>
@@ -166,10 +171,10 @@ const Navbar = ({
           <AnimatePresence>
             {isSearchOpen && (
               <motion.input
-                initial={{ width: 0, opacity: 0 }}
-                animate={{ width: '100%', opacity: 1 }}
-                exit={{ width: 0, opacity: 0 }}
-                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                transition={{ duration: 0.3, ease: 'easeOut' }}
                 type="text"
                 autoFocus
                 placeholder="Search movies or genres..."
@@ -179,7 +184,7 @@ const Navbar = ({
               />
             )}
           </AnimatePresence>
-        </div>
+        </motion.div>
       </div>
 
       {!isSearchOpen && (
@@ -331,6 +336,56 @@ const MovieRequestModal = ({ onClose }: { onClose: () => void }) => {
   );
 };
 
+const TermsModal = ({ onClose }: { onClose: () => void }) => {
+  const [content, setContent] = useState('Loading...');
+  const [title, setTitle] = useState('Terms & Conditions');
+
+  useEffect(() => {
+    const fetchTerms = async () => {
+      try {
+        const docRef = doc(db, 'pages', 'terms');
+        const docSnap = await getDocFromServer(docRef);
+        if (docSnap.exists()) {
+          setContent(docSnap.data().content);
+          setTitle(docSnap.data().title);
+        } else {
+          setContent('Terms and conditions not found.');
+        }
+      } catch (err) {
+        console.error("Failed to load terms:", err);
+        setContent('Error loading terms.');
+      }
+    };
+    fetchTerms();
+  }, []);
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }} 
+      animate={{ opacity: 1 }} 
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+      className="fixed inset-0 z-[100] bg-[#050505]/95 backdrop-blur-md flex items-center justify-center p-6"
+    >
+      <button onClick={onClose} className="absolute top-8 right-12 text-white/50 hover:text-white transition-colors duration-300">
+        <X size={24} />
+      </button>
+
+      <motion.div 
+        initial={{ y: 20, opacity: 0, scale: 0.95 }}
+        animate={{ y: 0, opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        className="w-full max-w-3xl bg-[#111] border border-white/5 p-8 lg:p-12 shadow-2xl relative overflow-y-auto max-h-[85vh] thin-scrollbar"
+      >
+        <h2 className="text-2xl lg:text-4xl font-black tracking-tighter uppercase italic mb-8 relative z-10 text-white">{title}</h2>
+        <div className="text-sm leading-relaxed text-white/70 whitespace-pre-wrap font-medium">
+          {content}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
 const AdminLogin = ({ onLogin, onClose }: { onLogin: () => void, onClose: () => void }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -421,6 +476,41 @@ const AdminDashboard = ({
   });
   const [editingId, setEditingId] = useState<number | null>(null);
 
+  const [activeTab, setActiveTab] = useState<'movies' | 'requests' | 'pages'>('movies');
+  const [termsContent, setTermsContent] = useState('');
+  const [isSavingTerms, setIsSavingTerms] = useState(false);
+
+  useEffect(() => {
+    if (activeTab === 'pages') {
+      const fetchTerms = async () => {
+        try {
+          const docSnap = await getDocFromServer(doc(db, 'pages', 'terms'));
+          if (docSnap.exists()) {
+             setTermsContent(docSnap.data().content);
+          }
+        } catch(err) {
+           console.error("Failed to fetch terms:", err);
+        }
+      };
+      fetchTerms();
+    }
+  }, [activeTab]);
+
+  const handleSaveTerms = async () => {
+    setIsSavingTerms(true);
+    try {
+      await setDoc(doc(db, 'pages', 'terms'), {
+        title: 'Terms & Conditions',
+        content: termsContent,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, 'pages/terms');
+    } finally {
+      setIsSavingTerms(false);
+    }
+  };
+
   const handleAddOrUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -474,11 +564,26 @@ const AdminDashboard = ({
       transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
       className="fixed inset-0 z-[100] bg-[#050505] overflow-y-auto"
     >
-      <nav className="sticky top-0 z-50 px-12 py-8 flex items-center justify-between border-b border-white/5 bg-[#050505]/80 backdrop-blur-md">
-        <div className="text-2xl font-black tracking-tighter uppercase italic">
-          Findinggoodd <span className="text-white/30 text-sm ml-2">| ADMIN</span>
+      <nav className="sticky top-0 z-50 px-6 lg:px-12 py-6 flex flex-col lg:flex-row lg:items-center justify-between border-b border-white/5 bg-[#050505]/80 backdrop-blur-md gap-6 lg:gap-4">
+        <div className="text-2xl font-black tracking-tighter uppercase italic flex items-center justify-between w-full lg:w-auto">
+          <div>Findinggoodd <span className="text-white/30 text-sm hidden sm:inline">| ADMIN</span></div>
+          <div className="flex gap-4 lg:hidden">
+            <button onClick={onLogout} className="text-white/50 hover:text-white">
+              <LogOut size={20} />
+            </button>
+            <button onClick={onClose} className="text-white/50 hover:text-white">
+              <X size={20} />
+            </button>
+          </div>
         </div>
-        <div className="flex gap-6">
+        
+        <div className="flex bg-[#111] border border-white/10 rounded-sm overflow-x-auto text-[10px] w-full lg:w-auto order-last lg:order-none snap-x">
+          <button onClick={() => setActiveTab('movies')} className={`flex-1 lg:flex-none px-4 py-3 uppercase font-bold tracking-widest whitespace-nowrap snap-center ${activeTab === 'movies' ? 'bg-white text-black' : 'text-white/50 hover:bg-white/5'}`}>Movies</button>
+          <button onClick={() => setActiveTab('requests')} className={`flex-1 lg:flex-none px-4 py-3 uppercase font-bold tracking-widest whitespace-nowrap snap-center ${activeTab === 'requests' ? 'bg-white text-black' : 'text-white/50 hover:bg-white/5'}`}>Requests</button>
+          <button onClick={() => setActiveTab('pages')} className={`flex-1 lg:flex-none px-4 py-3 uppercase font-bold tracking-widest whitespace-nowrap snap-center ${activeTab === 'pages' ? 'bg-white text-black' : 'text-white/50 hover:bg-white/5'}`}>Terms</button>
+        </div>
+
+        <div className="hidden lg:flex gap-6">
           <button onClick={onLogout} className="text-[10px] tracking-widest uppercase font-bold text-white/50 hover:text-white flex items-center gap-2">
             <LogOut size={14} /> Logout
           </button>
@@ -488,9 +593,10 @@ const AdminDashboard = ({
         </div>
       </nav>
 
-      <div className="px-12 py-12 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-3 gap-12">
-        {/* ADD MOVIE FORM */}
-        <div className="lg:col-span-1">
+      {activeTab === 'movies' && (
+        <div className="px-12 py-12 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-3 gap-12">
+          {/* ADD MOVIE FORM */}
+          <div className="lg:col-span-1">
           <div className="bg-[#111] border border-white/5 p-8 shadow-2xl lg:sticky lg:top-32">
             <h3 className="text-sm font-bold uppercase tracking-wider mb-6 text-white border-b border-white/5 pb-4">
               {editingId ? 'Edit Title' : 'Add New Title'}
@@ -558,9 +664,11 @@ const AdminDashboard = ({
            </div>
         </div>
       </div>
+      )}
 
       {/* ADD MOVIE REQUESTS HERE */}
-      <div className="px-12 pb-12 max-w-7xl mx-auto w-full">
+      {activeTab === 'requests' && (
+      <div className="px-12 py-12 max-w-7xl mx-auto w-full">
         <h3 className="text-sm font-bold uppercase tracking-wider mb-6 text-white border-b border-white/5 pb-4">User Movie Requests</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <AnimatePresence>
@@ -614,6 +722,31 @@ const AdminDashboard = ({
           )}
         </div>
       </div>
+      )}
+
+      {/* MANAGE PAGES HERE */}
+      {activeTab === 'pages' && (
+      <div className="px-12 py-12 max-w-5xl mx-auto w-full">
+        <h3 className="text-sm font-bold uppercase tracking-wider mb-6 text-white border-b border-white/5 pb-4">Terms & Conditions Settings</h3>
+        <div className="bg-[#111] border border-white/5 p-8 flex flex-col gap-6">
+          <textarea 
+            value={termsContent}
+            onChange={(e) => setTermsContent(e.target.value)}
+            placeholder="Enter Terms and Conditions... (Formatting is preserved)"
+            className="w-full bg-[#1a1a1a] border border-white/10 p-6 text-sm text-white outline-none focus:border-white/40 transition-colors resize-y h-96 font-medium leading-relaxed"
+          ></textarea>
+          <div className="flex justify-end">
+            <button 
+              onClick={handleSaveTerms} 
+              disabled={isSavingTerms}
+              className="px-8 py-4 bg-white text-black font-black uppercase text-xs tracking-widest hover:bg-white/90 transition-all text-center disabled:opacity-50"
+            >
+              {isSavingTerms ? 'Saving...' : 'Save Terms'}
+            </button>
+          </div>
+        </div>
+      </div>
+      )}
     </motion.div>
   );
 };
@@ -686,6 +819,7 @@ export default function App() {
   const [showAdmin, setShowAdmin] = useState(false);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [showRequestModal, setShowRequestModal] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
 
   useEffect(() => {
     const checkConnection = async () => {
@@ -767,6 +901,9 @@ export default function App() {
       />
 
       <AnimatePresence>
+        {showTermsModal && (
+          <TermsModal onClose={() => setShowTermsModal(false)} />
+        )}
         {showRequestModal && (
           <MovieRequestModal onClose={() => setShowRequestModal(false)} />
         )}
@@ -820,7 +957,7 @@ export default function App() {
         <footer className="flex items-center justify-between px-12 py-6 border-t border-white/5 text-[9px] tracking-widest uppercase font-bold text-white/20 mt-12 flex-col md:flex-row gap-6">
           <div className="flex gap-8">
             <span>Copyright 2026 Findinggoodd</span>
-            <span>Terms & Conditions</span>
+            <button onClick={() => setShowTermsModal(true)} className="hover:text-white transition-colors cursor-pointer uppercase">Terms & Conditions</button>
           </div>
           <div className="flex items-center gap-4">
             <span className="text-white/40">Sorted by: Relevance</span>
