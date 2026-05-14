@@ -856,6 +856,10 @@ const AdBannerModal = ({ movie, settings, onClose }: { movie: Movie, settings: a
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-[100] bg-[#050505]/95 flex flex-col items-center justify-center p-6 backdrop-blur-sm"
     >
+      <button onClick={onClose} className="absolute top-8 right-12 text-white/50 hover:text-white transition-colors duration-300 z-10">
+        <X size={24} />
+      </button>
+
       <div className="w-full max-w-4xl bg-[#111] border border-white/10 p-4 md:p-8 relative flex flex-col h-[70vh] items-center justify-center text-center shadow-2xl">
          {/* Render Ad Content */}
          <div 
