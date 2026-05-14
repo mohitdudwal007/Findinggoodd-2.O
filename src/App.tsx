@@ -715,7 +715,7 @@ const AdminDashboard = ({
                   transition={{ duration: 0.3 }}
                   className="bg-[#111] border border-white/5 p-4 flex items-center gap-4 group hover:bg-[#151515] transition-colors"
                 >
-                  <img src={m.poster} alt={m.title} loading="lazy" decoding="async" className="w-16 h-24 object-cover opacity-60 mix-blend-luminosity grayscale group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500" />
+                  <img src={m.poster} alt={m.title} loading="lazy" decoding="async" referrerPolicy="no-referrer" className="w-16 h-24 object-cover transition-all duration-500" />
                   <div className="flex-1">
                     <h4 className="text-sm font-bold uppercase tracking-wider text-white mb-1">{m.title}</h4>
                     <p className="text-[10px] text-white/40 tracking-wide font-bold">{m.year} • {m.genre}</p>
@@ -1002,7 +1002,8 @@ const MovieCard: React.FC<{ movie: Movie, index: number, onDownloadClick: (movie
           alt={movie.title}
           loading="lazy"
           decoding="async"
-          className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-all duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)] mix-blend-luminosity group-hover:mix-blend-normal z-0 grayscale group-hover:grayscale-0 group-hover:scale-105"
+          referrerPolicy="no-referrer"
+          className="absolute inset-0 w-full h-full object-cover transition-all duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)] z-0 group-hover:scale-105"
         />
         <div className="absolute top-4 right-4 z-20 bg-black/60 backdrop-blur-md px-2 py-1 text-[10px] font-bold border border-white/10 flex items-center gap-1 text-[#FFD700]">
           ★ <span className="text-white">{movie.rating}</span>
