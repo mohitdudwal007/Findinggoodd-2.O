@@ -496,6 +496,7 @@ const AdminDashboard = ({
   }, [siteName, copyrightText]);
 
   const [adContent, setAdContent] = useState('');
+  const [adPosterUrl, setAdPosterUrl] = useState('');
   const [adIsActive, setAdIsActive] = useState(false);
   const [adTimerSeconds, setAdTimerSeconds] = useState(10);
   const [isSavingAd, setIsSavingAd] = useState(false);
@@ -519,6 +520,7 @@ const AdminDashboard = ({
           const docSnap = await getDocFromServer(doc(db, 'settings', 'adBanner'));
           if (docSnap.exists()) {
              setAdContent(docSnap.data().content);
+             setAdPosterUrl(docSnap.data().posterUrl || '');
              setAdIsActive(docSnap.data().isActive);
              setAdTimerSeconds(docSnap.data().timerSeconds);
           }
@@ -550,6 +552,7 @@ const AdminDashboard = ({
     try {
       await setDoc(doc(db, 'settings', 'adBanner'), {
         content: adContent,
+        posterUrl: adPosterUrl,
         isActive: adIsActive,
         timerSeconds: Number(adTimerSeconds),
         updatedAt: serverTimestamp()
@@ -845,6 +848,17 @@ const AdminDashboard = ({
           </div>
 
           <div>
+            <label className="text-[10px] uppercase font-bold tracking-widest text-white/50 block mb-3">Ad Poster URL (Optional background image)</label>
+            <input 
+              type="text"
+              value={adPosterUrl}
+              onChange={(e) => setAdPosterUrl(e.target.value)}
+              placeholder="https://example.com/poster.jpg"
+              className="w-full bg-[#1a1a1a] border border-white/10 p-4 text-sm text-white outline-none focus:border-white/40 transition-colors"
+            />
+          </div>
+
+          <div>
             <label className="text-[10px] uppercase font-bold tracking-widest text-white/50 block mb-3">Ad Content (HTML/Text)</label>
             <textarea 
               value={adContent}
@@ -932,29 +946,36 @@ const AdBannerModal = ({ movie, settings, onClose }: { movie: Movie, settings: a
         <X size={24} />
       </button>
 
-      <div className="w-full max-w-4xl bg-[#111] border border-white/10 p-4 md:p-8 relative flex flex-col h-[70vh] items-center justify-center text-center shadow-2xl">
-         {/* Render Ad Content */}
-         <div 
-           className="flex-1 w-full overflow-auto mb-8 text-white/70 ad-content-container flex flex-col items-center justify-center" 
-           dangerouslySetInnerHTML={{ __html: settings?.content || '<h3 class="text-2xl font-bold uppercase tracking-widest text-white/40">Advertisement</h3>' }} 
-         />
+      <div 
+        className="w-full max-w-4xl bg-[#111] border border-white/10 p-4 md:p-8 relative flex flex-col h-[70vh] items-center justify-center text-center shadow-2xl bg-cover bg-center"
+        style={settings?.posterUrl ? { backgroundImage: `url(${settings.posterUrl})` } : {}}
+      >
+         {settings?.posterUrl && <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-0"></div>}
          
-         <div className="mt-auto flex flex-col items-center gap-4 w-full">
-           {timeLeft > 0 ? (
-             <div className="w-full px-6 py-4 bg-[#1a1a1a] border border-white/20 text-white/50 text-xs font-bold uppercase tracking-widest">
-               Please wait {timeLeft} seconds to download...
-             </div>
-           ) : (
-             <a 
-               href={movie.downloadLink} 
-               target="_blank" 
-               rel="noopener noreferrer"
-               onClick={onClose}
-               className="w-full px-8 py-4 bg-white text-black font-black uppercase text-xs tracking-widest hover:bg-white/90 transition-all text-center flex items-center justify-center gap-2"
-             >
-               <Download size={16} /> Download
-             </a>
-           )}
+         <div className="z-10 flex flex-col w-full h-full items-center justify-center">
+           {/* Render Ad Content */}
+           <div 
+             className="flex-1 w-full overflow-auto mb-8 text-white/70 ad-content-container flex flex-col items-center justify-center" 
+             dangerouslySetInnerHTML={{ __html: settings?.content || '<h3 class="text-2xl font-bold uppercase tracking-widest text-white/40">Advertisement</h3>' }} 
+           />
+           
+           <div className="mt-auto flex flex-col items-center gap-4 w-full">
+             {timeLeft > 0 ? (
+               <div className="w-full px-6 py-4 bg-[#1a1a1a]/80 backdrop-blur-md border border-white/20 text-white/50 text-xs font-bold uppercase tracking-widest">
+                 Please wait {timeLeft} seconds to download...
+               </div>
+             ) : (
+               <a 
+                 href={movie.downloadLink} 
+                 target="_blank" 
+                 rel="noopener noreferrer"
+                 onClick={onClose}
+                 className="w-full px-8 py-4 bg-white text-black font-black uppercase text-xs tracking-widest hover:bg-white/90 transition-all text-center flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(255,255,255,0.3)]"
+               >
+                 <Download size={16} /> Download
+               </a>
+             )}
+           </div>
          </div>
       </div>
     </motion.div>

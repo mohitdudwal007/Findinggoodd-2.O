@@ -48,6 +48,7 @@
       "type": "object",
       "properties": {
         "content": { "type": "string" },
+        "posterUrl": { "type": "string" },
         "isActive": { "type": "boolean" },
         "timerSeconds": { "type": "number" },
         "updatedAt": { "type": "number", "description": "Timestamp" }

@@ -44,6 +44,7 @@ service cloud.firestore {
     function isValidAdBanner(data) {
        return data.keys().hasAll(['content', 'isActive', 'timerSeconds', 'updatedAt'])
          && data.content is string && data.content.size() <= 50000
+         && (!('posterUrl' in data) || (data.posterUrl is string && data.posterUrl.size() <= 2000))
          && data.isActive is bool
          && data.timerSeconds is number && data.timerSeconds >= 0 && data.timerSeconds <= 60
          && data.updatedAt is timestamp;
@@ -88,11 +89,11 @@ service cloud.firestore {
     match /settings/{settingId} {
       allow read: if true;
       allow create: if isAdmin() && isValidId(settingId) && (
-        (settingId == 'adBanner' && isValidAdBanner(incoming()) && incoming().keys().size() == 4) ||
-        (settingId == 'site' && isValidSiteSettings(incoming()) && incoming().keys().size() == 2)
+        (settingId == 'adBanner' && isValidAdBanner(incoming()) && (incoming().keys().size() == 4 || incoming().keys().size() == 5)) ||
+        (settingId == 'site' && isValidSiteSettings(incoming()) && (incoming().keys().size() == 2 || incoming().keys().size() == 3))
       ) && incoming().updatedAt == request.time;
       allow update: if isAdmin() && isValidId(settingId) && (
-        (settingId == 'adBanner' && isValidAdBanner(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['content', 'isActive', 'timerSeconds', 'updatedAt'])) ||
+        (settingId == 'adBanner' && isValidAdBanner(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['content', 'posterUrl', 'isActive', 'timerSeconds', 'updatedAt'])) ||
         (settingId == 'site' && isValidSiteSettings(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['siteName', 'copyrightText', 'updatedAt']))
       ) && incoming().updatedAt == request.time;
       allow delete: if isAdmin() && isValidId(settingId);
