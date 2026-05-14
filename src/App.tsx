@@ -681,7 +681,7 @@ const AdminDashboard = ({
                   transition={{ duration: 0.3 }}
                   className="bg-[#111] border border-white/5 p-4 flex items-center gap-4 group hover:bg-[#151515] transition-colors"
                 >
-                  <img src={m.poster} alt={m.title} className="w-16 h-24 object-cover opacity-60 mix-blend-luminosity grayscale group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500" />
+                  <img src={m.poster} alt={m.title} loading="lazy" decoding="async" className="w-16 h-24 object-cover opacity-60 mix-blend-luminosity grayscale group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500" />
                   <div className="flex-1">
                     <h4 className="text-sm font-bold uppercase tracking-wider text-white mb-1">{m.title}</h4>
                     <p className="text-[10px] text-white/40 tracking-wide font-bold">{m.year} • {m.genre}</p>
@@ -889,7 +889,7 @@ const AdBannerModal = ({ movie, settings, onClose }: { movie: Movie, settings: a
   );
 };
 
-const MovieCard: React.FC<{ movie: Movie, index: number, onDownloadClick: (movie: Movie) => void }> = ({ movie, index, onDownloadClick }) => {
+const MovieCard: React.FC<{ movie: Movie, index: number, onDownloadClick: (movie: Movie) => void }> = React.memo(({ movie, index, onDownloadClick }) => {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -907,6 +907,8 @@ const MovieCard: React.FC<{ movie: Movie, index: number, onDownloadClick: (movie
         <img 
           src={movie.poster} 
           alt={movie.title}
+          loading="lazy"
+          decoding="async"
           className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-all duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)] mix-blend-luminosity group-hover:mix-blend-normal z-0 grayscale group-hover:grayscale-0 group-hover:scale-105"
         />
         <div className="absolute top-4 right-4 z-20 bg-black/60 backdrop-blur-md px-2 py-1 text-[10px] font-bold border border-white/10 flex items-center gap-1 text-[#FFD700]">
@@ -946,10 +948,11 @@ const MovieCard: React.FC<{ movie: Movie, index: number, onDownloadClick: (movie
       </div>
     </motion.div>
   );
-};
+});
 
 export default function App() {
   const [movies, setMovies] = useState<Movie[]>([]);
+  const [isLoadingMovies, setIsLoadingMovies] = useState(true);
   const [requests, setRequests] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showAdmin, setShowAdmin] = useState(false);
@@ -990,8 +993,10 @@ export default function App() {
         fetchedMovies.push({ id: doc.id as any, ...doc.data() } as Movie);
       });
       setMovies(fetchedMovies.length > 0 ? fetchedMovies : INITIAL_MOVIES);
+      setIsLoadingMovies(false);
     }, (error) => {
       handleFirestoreError(error, OperationType.LIST, 'movies');
+      setIsLoadingMovies(false);
     });
 
     // Check pre-existing auth for admin
@@ -1090,7 +1095,18 @@ export default function App() {
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 flex-1">
-            {filteredMovies.length > 0 ? (
+            {isLoadingMovies ? (
+              // Loading Skeleton
+              Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="h-80 lg:h-96 bg-[#111] animate-pulse relative overflow-hidden border border-white/5">
+                  <div className="absolute top-4 right-4 bg-[#1a1a1a] w-12 h-4"></div>
+                  <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black via-black/80 to-transparent">
+                    <div className="h-6 w-3/4 bg-[#1a1a1a] mb-2"></div>
+                    <div className="h-4 w-1/2 bg-[#1a1a1a]"></div>
+                  </div>
+                </div>
+              ))
+            ) : filteredMovies.length > 0 ? (
               filteredMovies.map((movie, idx) => (
                 <MovieCard 
                    key={movie.id} 
