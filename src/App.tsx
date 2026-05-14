@@ -1259,7 +1259,6 @@ export default function App() {
             <button onClick={() => setShowTermsModal(true)} className="hover:text-white transition-colors cursor-pointer uppercase">Terms & Conditions</button>
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-white/40">Sorted by: Relevance</span>
             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
             <span className="text-white/40 uppercase">Network Status: High Speed</span>
           </div>
