@@ -39,7 +39,6 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
 type Movie = {
   id: string | number;
   title: string;
-  director: string;
   year: string;
   rating: number;
   poster: string;
@@ -52,7 +51,6 @@ const INITIAL_MOVIES: Movie[] = [
   {
     id: 1,
     title: 'ECHELON',
-    director: 'Ridley V.',
     year: '2024',
     rating: 8.9,
     poster: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=800&auto=format&fit=crop',
@@ -62,7 +60,6 @@ const INITIAL_MOVIES: Movie[] = [
   {
     id: 2,
     title: 'NIGHTRUN',
-    director: 'Michael M.',
     year: '2025',
     rating: 7.5,
     poster: 'https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=800&auto=format&fit=crop',
@@ -72,7 +69,6 @@ const INITIAL_MOVIES: Movie[] = [
   {
     id: 3,
     title: 'VOID',
-    director: 'Christopher N.',
     year: '2023',
     rating: 9.2,
     poster: 'https://images.unsplash.com/photo-1535016120720-40c7467d5283?q=80&w=800&auto=format&fit=crop',
@@ -82,7 +78,6 @@ const INITIAL_MOVIES: Movie[] = [
   {
     id: 4,
     title: 'THE GRID',
-    director: 'Denis V.',
     year: '2026',
     rating: 8.4,
     poster: 'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=800&auto=format&fit=crop',
@@ -92,7 +87,6 @@ const INITIAL_MOVIES: Movie[] = [
   {
     id: 5,
     title: 'NEON TEARS',
-    director: 'Wong K.',
     year: '2022',
     rating: 8.1,
     poster: 'https://images.unsplash.com/photo-1533105079780-92b9be482077?q=80&w=800&auto=format&fit=crop',
@@ -102,7 +96,6 @@ const INITIAL_MOVIES: Movie[] = [
   {
     id: 6,
     title: 'OBSCURA',
-    director: 'David F.',
     year: '2024',
     rating: 7.8,
     poster: 'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?q=80&w=800&auto=format&fit=crop',
@@ -151,7 +144,7 @@ const Navbar = ({
     >
       <div 
         onClick={handleBrandClick}
-        className={`text-2xl font-black tracking-tighter uppercase italic transition-opacity cursor-pointer select-none ${isSearchOpen ? 'opacity-0 hidden md:block' : 'opacity-100'}`}
+        className={`text-2xl font-display font-black tracking-tighter uppercase transition-opacity cursor-pointer select-none ${isSearchOpen ? 'opacity-0 hidden md:block' : 'opacity-100'}`}
       >
         {siteName}
       </div>
@@ -205,7 +198,7 @@ const Navbar = ({
 
 const Hero = () => (
   <section className="relative h-[70vh] min-h-[600px] flex items-center px-6 md:px-12 xl:px-24 overflow-hidden mb-12">
-    <div className="absolute -left-4 top-24 text-[120px] lg:text-[180px] font-black text-white/5 select-none pointer-events-none z-0 tracking-tighter">FEATURED</div>
+    <div className="absolute -left-4 top-24 text-[120px] lg:text-[180px] font-display font-black text-white/5 select-none pointer-events-none z-0 tracking-tighter">FEATURED</div>
     
     <div className="max-w-5xl relative z-10 w-full mt-24">
       <motion.p 
@@ -223,10 +216,10 @@ const Hero = () => (
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-        className="text-6xl md:text-8xl lg:text-9xl font-light tracking-tight leading-none mb-8 italic"
+        className="text-6xl md:text-8xl lg:text-9xl font-display font-light tracking-tight leading-none mb-8"
       >
         Download <br /> 
-        <span className="font-black not-italic text-white">
+        <span className="font-black text-white">
           The Void.
         </span>
       </motion.h1>
@@ -297,7 +290,7 @@ const MovieRequestModal = ({ onClose }: { onClose: () => void }) => {
         transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         className="w-full max-w-md bg-[#111] border border-white/5 p-8 shadow-2xl relative overflow-hidden"
       >
-        <h2 className="text-2xl font-black tracking-tighter uppercase italic mb-8 relative z-10 text-white">Request a Movie</h2>
+        <h2 className="text-2xl font-display font-black tracking-tighter uppercase mb-8 relative z-10 text-white">Request a Movie</h2>
         
         {success ? (
           <div className="flex flex-col items-center justify-center py-12 text-center relative z-10">
@@ -379,7 +372,7 @@ const TermsModal = ({ onClose }: { onClose: () => void }) => {
         transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         className="w-full max-w-3xl bg-[#111] border border-white/5 p-8 lg:p-12 shadow-2xl relative overflow-y-auto max-h-[85vh] thin-scrollbar"
       >
-        <h2 className="text-2xl lg:text-4xl font-black tracking-tighter uppercase italic mb-8 relative z-10 text-white">{title}</h2>
+        <h2 className="text-2xl lg:text-4xl font-display font-black tracking-tighter uppercase mb-8 relative z-10 text-white">{title}</h2>
         <div className="text-sm leading-relaxed text-white/70 whitespace-pre-wrap font-medium">
           {content}
         </div>
@@ -425,7 +418,7 @@ const AdminLogin = ({ onLogin, onClose }: { onLogin: () => void, onClose: () => 
           <Menu size={120} />
         </div>
         
-        <h2 className="text-2xl font-black tracking-tighter uppercase italic mb-8 relative z-10">Admin Access</h2>
+        <h2 className="text-2xl font-display font-black tracking-tighter uppercase mb-8 relative z-10">Admin Access</h2>
         
         <form onSubmit={handleSubmit} className="flex flex-col gap-6 relative z-10">
           <div>
@@ -478,7 +471,7 @@ const AdminDashboard = ({
   copyrightText: string;
 }) => {
   const [newMovie, setNewMovie] = useState({
-    title: '', director: '', year: '', rating: '', poster: '', genre: '', size: '', downloadLink: ''
+    title: '', year: '', rating: '', poster: '', genre: '', size: '', downloadLink: ''
   });
   const [editingId, setEditingId] = useState<number | string | null>(null);
 
@@ -596,7 +589,7 @@ const AdminDashboard = ({
           updatedAt: serverTimestamp() 
         });
       }
-      setNewMovie({ title: '', director: '', year: '', rating: '', poster: '', genre: '', size: '', downloadLink: '' });
+      setNewMovie({ title: '', year: '', rating: '', poster: '', genre: '', size: '', downloadLink: '' });
     } catch (error) {
       handleFirestoreError(error, editingId ? OperationType.UPDATE : OperationType.CREATE, 'movies');
     }
@@ -605,7 +598,6 @@ const AdminDashboard = ({
   const handleEdit = (movie: Movie) => {
     setNewMovie({
       title: movie.title,
-      director: movie.director,
       year: movie.year,
       rating: movie.rating.toString(),
       poster: movie.poster,
@@ -633,7 +625,7 @@ const AdminDashboard = ({
       className="fixed inset-0 z-[100] bg-[#050505] overflow-y-auto"
     >
       <nav className="sticky top-0 z-50 px-6 lg:px-12 py-6 flex flex-col lg:flex-row lg:items-center justify-between border-b border-white/5 bg-[#050505]/80 backdrop-blur-md gap-6 lg:gap-4">
-        <div className="text-2xl font-black tracking-tighter uppercase italic flex items-center justify-between w-full lg:w-auto">
+        <div className="text-2xl font-display font-black tracking-tighter uppercase flex items-center justify-between w-full lg:w-auto">
           <div>{siteName} <span className="text-white/30 text-sm hidden sm:inline">| ADMIN</span></div>
           <div className="flex gap-4 lg:hidden">
             <button onClick={onLogout} className="text-white/50 hover:text-white">
@@ -673,7 +665,6 @@ const AdminDashboard = ({
             </h3>
             <form onSubmit={handleAddOrUpdate} className="flex flex-col gap-4">
               <input placeholder="Title" required value={newMovie.title} onChange={e => setNewMovie({...newMovie, title: e.target.value})} className="w-full bg-[#1a1a1a] border border-white/10 p-3 text-xs text-white outline-none focus:border-white/40" />
-              <input placeholder="Director" required value={newMovie.director} onChange={e => setNewMovie({...newMovie, director: e.target.value})} className="w-full bg-[#1a1a1a] border border-white/10 p-3 text-xs text-white outline-none focus:border-white/40" />
               <input placeholder="Year" required value={newMovie.year} onChange={e => setNewMovie({...newMovie, year: e.target.value})} className="w-full bg-[#1a1a1a] border border-white/10 p-3 text-xs text-white outline-none focus:border-white/40" />
               <input placeholder="Rating (0-10)" required type="number" step="0.1" value={newMovie.rating} onChange={e => setNewMovie({...newMovie, rating: e.target.value})} className="w-full bg-[#1a1a1a] border border-white/10 p-3 text-xs text-white outline-none focus:border-white/40" />
               <input placeholder="Poster URL" required value={newMovie.poster} onChange={e => setNewMovie({...newMovie, poster: e.target.value})} className="w-full bg-[#1a1a1a] border border-white/10 p-3 text-xs text-white outline-none focus:border-white/40" />
@@ -693,7 +684,7 @@ const AdminDashboard = ({
                 )}
               </button>
               {editingId && (
-                <button type="button" onClick={() => { setEditingId(null); setNewMovie({ title: '', director: '', year: '', rating: '', poster: '', genre: '', size: '', downloadLink: '' }); }} className="px-6 py-3 border border-white/20 text-white font-bold uppercase text-xs tracking-widest hover:bg-white/10 transition-all flex items-center justify-center gap-2">
+                <button type="button" onClick={() => { setEditingId(null); setNewMovie({ title: '', year: '', rating: '', poster: '', genre: '', size: '', downloadLink: '' }); }} className="px-6 py-3 border border-white/20 text-white font-bold uppercase text-xs tracking-widest hover:bg-white/10 transition-all flex items-center justify-center gap-2">
                   Cancel Edit
                 </button>
               )}
@@ -715,7 +706,7 @@ const AdminDashboard = ({
                   transition={{ duration: 0.3 }}
                   className="bg-[#111] border border-white/5 p-4 flex items-center gap-4 group hover:bg-[#151515] transition-colors"
                 >
-                  <img src={m.poster} alt={m.title} loading="lazy" decoding="async" referrerPolicy="no-referrer" className="w-16 h-24 object-cover transition-all duration-500" />
+                  <img src={m.poster} alt={m.title} loading="lazy" decoding="async" referrerPolicy="no-referrer" className="w-16 h-24 object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
                   <div className="flex-1">
                     <h4 className="text-sm font-bold uppercase tracking-wider text-white mb-1">{m.title}</h4>
                     <p className="text-[10px] text-white/40 tracking-wide font-bold">{m.year} • {m.genre}</p>
@@ -956,7 +947,7 @@ const AdBannerModal = ({ movie, settings, onClose }: { movie: Movie, settings: a
            {/* Render Ad Content */}
            <div 
              className="flex-1 w-full overflow-auto mb-8 text-white/70 ad-content-container flex flex-col items-center justify-center" 
-             dangerouslySetInnerHTML={{ __html: settings?.content || '<h3 class="text-2xl font-bold uppercase tracking-widest text-white/40">Advertisement</h3>' }} 
+             dangerouslySetInnerHTML={{ __html: settings?.content || (settings?.posterUrl ? '' : '<h3 class="text-2xl font-display font-black uppercase tracking-widest text-white/40">Advertisement</h3>') }} 
            />
            
            <div className="mt-auto flex flex-col items-center gap-4 w-full">
@@ -995,7 +986,7 @@ const MovieCard: React.FC<{ movie: Movie, index: number, onDownloadClick: (movie
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="h-80 lg:h-96 bg-[#1a1a1a] relative overflow-hidden">
+      <div className="aspect-[2/3] bg-[#1a1a1a] relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-t from-[#111] via-black/20 to-transparent z-10"></div>
         <img 
           src={movie.poster} 
@@ -1003,7 +994,7 @@ const MovieCard: React.FC<{ movie: Movie, index: number, onDownloadClick: (movie
           loading="lazy"
           decoding="async"
           referrerPolicy="no-referrer"
-          className="absolute inset-0 w-full h-full object-cover transition-all duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)] z-0 group-hover:scale-105"
+          className="absolute inset-0 w-full h-full object-cover transition-all duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)] z-0 grayscale group-hover:grayscale-0 group-hover:scale-105"
         />
         <div className="absolute top-4 right-4 z-20 bg-black/60 backdrop-blur-md px-2 py-1 text-[10px] font-bold border border-white/10 flex items-center gap-1 text-[#FFD700]">
           ★ <span className="text-white">{movie.rating}</span>
@@ -1204,7 +1195,7 @@ export default function App() {
         
         <section className="px-6 md:px-12 xl:px-24 pb-24">
           <div className="flex justify-between items-end mb-12 border-b border-white/5 pb-4">
-            <h2 className="text-2xl font-black tracking-tighter uppercase italic">
+            <h2 className="text-2xl font-display font-black tracking-tighter uppercase">
               Latest Additions
             </h2>
             <button className="hidden md:flex text-white/40 hover:text-white transition-colors items-center gap-2 text-[10px] uppercase tracking-[0.2em] font-bold group">
@@ -1212,11 +1203,11 @@ export default function App() {
             </button>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 flex-1">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 flex-1">
             {isLoadingMovies ? (
               // Loading Skeleton
-              Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="h-80 lg:h-96 bg-[#111] animate-pulse relative overflow-hidden border border-white/5">
+              Array.from({ length: 10 }).map((_, i) => (
+                <div key={i} className="aspect-[2/3] bg-[#111] animate-pulse relative overflow-hidden border border-white/5">
                   <div className="absolute top-4 right-4 bg-[#1a1a1a] w-12 h-4"></div>
                   <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black via-black/80 to-transparent">
                     <div className="h-6 w-3/4 bg-[#1a1a1a] mb-2"></div>

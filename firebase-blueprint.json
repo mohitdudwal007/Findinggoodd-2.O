@@ -6,7 +6,6 @@
       "type": "object",
       "properties": {
         "title": { "type": "string" },
-        "director": { "type": "string" },
         "year": { "type": "string" },
         "rating": { "type": "number" },
         "poster": { "type": "string" },
@@ -16,7 +15,7 @@
         "createdAt": { "type": "number", "description": "Timestamp" },
         "updatedAt": { "type": "number", "description": "Timestamp" }
       },
-      "required": ["title", "director", "year", "rating", "poster", "genre", "size", "downloadLink", "createdAt", "updatedAt"]
+      "required": ["title", "year", "rating", "poster", "genre", "size", "downloadLink", "createdAt", "updatedAt"]
     },
     "movieRequest": {
       "title": "Movie Request",
