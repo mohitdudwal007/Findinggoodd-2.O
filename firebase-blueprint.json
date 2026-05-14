@@ -60,6 +60,7 @@
       "type": "object",
       "properties": {
         "siteName": { "type": "string" },
+        "copyrightText": { "type": "string" },
         "updatedAt": { "type": "number", "description": "Timestamp" }
       },
       "required": ["siteName", "updatedAt"]

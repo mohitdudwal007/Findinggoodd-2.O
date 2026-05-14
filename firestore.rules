@@ -52,6 +52,7 @@ service cloud.firestore {
     function isValidSiteSettings(data) {
        return data.keys().hasAll(['siteName', 'updatedAt'])
          && data.siteName is string && data.siteName.size() > 0 && data.siteName.size() <= 100
+         && (!('copyrightText' in data) || (data.copyrightText is string && data.copyrightText.size() <= 200))
          && data.updatedAt is timestamp;
     }
 
@@ -92,7 +93,7 @@ service cloud.firestore {
       ) && incoming().updatedAt == request.time;
       allow update: if isAdmin() && isValidId(settingId) && (
         (settingId == 'adBanner' && isValidAdBanner(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['content', 'isActive', 'timerSeconds', 'updatedAt'])) ||
-        (settingId == 'site' && isValidSiteSettings(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['siteName', 'updatedAt']))
+        (settingId == 'site' && isValidSiteSettings(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['siteName', 'copyrightText', 'updatedAt']))
       ) && incoming().updatedAt == request.time;
       allow delete: if isAdmin() && isValidId(settingId);
     }

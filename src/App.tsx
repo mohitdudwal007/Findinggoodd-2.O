@@ -273,7 +273,7 @@ const MovieRequestModal = ({ onClose }: { onClose: () => void }) => {
       });
       setSuccess(true);
     } catch (error) {
-      console.error("Failed to submit request", error);
+      handleFirestoreError(error, OperationType.CREATE, 'movieRequests');
     } finally {
       setIsSubmitting(false);
     }
@@ -354,7 +354,7 @@ const TermsModal = ({ onClose }: { onClose: () => void }) => {
           setContent('Terms and conditions not found.');
         }
       } catch (err) {
-        console.error("Failed to load terms:", err);
+        handleFirestoreError(err, OperationType.GET, 'pages/terms');
         setContent('Error loading terms.');
       }
     };
@@ -466,7 +466,8 @@ const AdminDashboard = ({
   requests,
   onLogout, 
   onClose,
-  siteName
+  siteName,
+  copyrightText
 }: { 
   movies: Movie[]; 
   setMovies: (movies: Movie[]) => void; 
@@ -474,6 +475,7 @@ const AdminDashboard = ({
   onLogout: () => void; 
   onClose: () => void; 
   siteName: string;
+  copyrightText: string;
 }) => {
   const [newMovie, setNewMovie] = useState({
     title: '', director: '', year: '', rating: '', poster: '', genre: '', size: '', downloadLink: ''
@@ -485,7 +487,13 @@ const AdminDashboard = ({
   const [isSavingTerms, setIsSavingTerms] = useState(false);
 
   const [adminSiteName, setAdminSiteName] = useState(siteName);
+  const [adminCopyrightText, setAdminCopyrightText] = useState(copyrightText || '');
   const [isSavingSiteName, setIsSavingSiteName] = useState(false);
+
+  useEffect(() => {
+    setAdminSiteName(siteName);
+    setAdminCopyrightText(copyrightText || '');
+  }, [siteName, copyrightText]);
 
   const [adContent, setAdContent] = useState('');
   const [adIsActive, setAdIsActive] = useState(false);
@@ -501,7 +509,7 @@ const AdminDashboard = ({
              setTermsContent(docSnap.data().content);
           }
         } catch(err) {
-           console.error("Failed to fetch terms:", err);
+           handleFirestoreError(err, OperationType.GET, 'pages/terms');
         }
       };
       fetchTerms();
@@ -515,7 +523,7 @@ const AdminDashboard = ({
              setAdTimerSeconds(docSnap.data().timerSeconds);
           }
         } catch(err) {
-           console.error("Failed to fetch ad banner:", err);
+           handleFirestoreError(err, OperationType.GET, 'settings/adBanner');
         }
       };
       fetchAd();
@@ -558,6 +566,7 @@ const AdminDashboard = ({
     try {
       await setDoc(doc(db, 'settings', 'site'), {
         siteName: adminSiteName,
+        copyrightText: adminCopyrightText,
         updatedAt: serverTimestamp()
       }, { merge: true });
     } catch (err) {
@@ -863,14 +872,27 @@ const AdminDashboard = ({
       <div className="px-12 py-12 max-w-5xl mx-auto w-full">
         <h3 className="text-sm font-bold uppercase tracking-wider mb-6 text-white border-b border-white/5 pb-4">General Website Settings</h3>
         <div className="bg-[#111] border border-white/5 p-8 flex flex-col gap-6">
-          <div>
-            <label className="text-[10px] uppercase font-bold tracking-widest text-white/50 block mb-3">Website Name</label>
-            <input 
-              type="text" 
-              value={adminSiteName}
-              onChange={(e) => setAdminSiteName(e.target.value)}
-              className="w-full bg-[#1a1a1a] border border-white/10 p-4 text-sm text-white outline-none focus:border-white/40 transition-colors"
-            />
+          <div className="flex flex-col md:flex-row gap-6">
+            <div className="flex-1">
+              <label className="text-[10px] uppercase font-bold tracking-widest text-white/50 block mb-3">Website Name</label>
+              <input 
+                type="text" 
+                value={adminSiteName}
+                onChange={(e) => setAdminSiteName(e.target.value)}
+                className="w-full bg-[#1a1a1a] border border-white/10 p-4 text-sm text-white outline-none focus:border-white/40 transition-colors"
+                placeholder="Ex. Findinggoodd"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="text-[10px] uppercase font-bold tracking-widest text-white/50 block mb-3">Copyright Text</label>
+              <input 
+                type="text" 
+                value={adminCopyrightText}
+                onChange={(e) => setAdminCopyrightText(e.target.value)}
+                className="w-full bg-[#1a1a1a] border border-white/10 p-4 text-sm text-white outline-none focus:border-white/40 transition-colors"
+                placeholder="Ex. Copyright 2026 Admin"
+              />
+            </div>
           </div>
 
           <div className="flex justify-end">
@@ -1011,6 +1033,7 @@ export default function App() {
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [adSettings, setAdSettings] = useState<any>(null);
   const [siteName, setSiteName] = useState('Findinggoodd');
+  const [copyrightText, setCopyrightText] = useState(`Copyright ${new Date().getFullYear()} Findinggoodd`);
   const [downloadingMovie, setDownloadingMovie] = useState<Movie | null>(null);
 
   useEffect(() => {
@@ -1019,16 +1042,22 @@ export default function App() {
             setAdSettings(docSnap.data());
         }
     }, (error) => {
-       console.error("Ad Banner fetch error", error);
+       handleFirestoreError(error, OperationType.GET, 'settings/adBanner');
     });
 
     const unsubSite = onSnapshot(doc(db, 'settings', 'site'), (docSnap) => {
-        if (docSnap.exists() && docSnap.data().siteName) {
-            setSiteName(docSnap.data().siteName);
-            document.title = docSnap.data().siteName;
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            if (data.siteName) {
+                setSiteName(data.siteName);
+                document.title = data.siteName;
+            }
+            if (data.copyrightText !== undefined) {
+                setCopyrightText(data.copyrightText);
+            }
         }
     }, (error) => {
-       console.error("Site settings fetch error", error);
+       handleFirestoreError(error, OperationType.GET, 'settings/site');
     });
 
     return () => {
@@ -1143,6 +1172,7 @@ export default function App() {
              onLogout={handleLogout}
              onClose={() => setShowAdmin(false)} 
              siteName={siteName}
+             copyrightText={copyrightText}
            />
         )}
       </AnimatePresence>
@@ -1201,7 +1231,7 @@ export default function App() {
         {/* Footer Area */}
         <footer className="flex items-center justify-between px-12 py-6 border-t border-white/5 text-[9px] tracking-widest uppercase font-bold text-white/20 mt-12 flex-col md:flex-row gap-6">
           <div className="flex gap-8">
-            <span>Copyright {new Date().getFullYear()} {siteName}</span>
+            <span>{copyrightText}</span>
             <button onClick={() => setShowTermsModal(true)} className="hover:text-white transition-colors cursor-pointer uppercase">Terms & Conditions</button>
           </div>
           <div className="flex items-center gap-4">
