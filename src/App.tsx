@@ -37,7 +37,7 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
 
 // --- MOCK DATA ---
 type Movie = {
-  id: number;
+  id: string | number;
   title: string;
   director: string;
   year: string;
@@ -480,7 +480,7 @@ const AdminDashboard = ({
   const [newMovie, setNewMovie] = useState({
     title: '', director: '', year: '', rating: '', poster: '', genre: '', size: '', downloadLink: ''
   });
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<number | string | null>(null);
 
   const [activeTab, setActiveTab] = useState<'movies' | 'requests' | 'pages' | 'ads' | 'settings'>('movies');
   const [termsContent, setTermsContent] = useState('');
@@ -613,7 +613,7 @@ const AdminDashboard = ({
     setEditingId(movie.id);
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string | number) => {
     try {
       await deleteDoc(doc(db, 'movies', id.toString()));
     } catch (error) {
@@ -1085,7 +1085,7 @@ export default function App() {
       snapshot.forEach((doc) => {
         fetchedMovies.push({ id: doc.id as any, ...doc.data() } as Movie);
       });
-      setMovies(fetchedMovies.length > 0 ? fetchedMovies : INITIAL_MOVIES);
+      setMovies(fetchedMovies);
       setIsLoadingMovies(false);
     }, (error) => {
       handleFirestoreError(error, OperationType.LIST, 'movies');
@@ -1219,9 +1219,11 @@ export default function App() {
               ))
             ) : (
               <div className="col-span-full py-24 flex flex-col items-center justify-center border border-white/5 bg-[#111]">
-                <div className="text-[10px] tracking-widest uppercase font-bold text-white/40 mb-2">No Results Found</div>
-                <div className="text-xl font-light tracking-tight italic text-white/70">
-                  We couldn't find anything matching "{searchQuery}"
+                <div className="text-[10px] tracking-widest uppercase font-bold text-white/40 mb-2">
+                  {searchQuery ? 'No Results Found' : 'No Movies'}
+                </div>
+                <div className="text-xl font-light tracking-tight italic text-white/70 text-center">
+                  {searchQuery ? `We couldn't find anything matching "${searchQuery}"` : "No movies have been added yet."}
                 </div>
               </div>
             )}
