@@ -1,0 +1,45 @@
+{
+  "entities": {
+    "movie": {
+      "title": "Movie",
+      "description": "Represents a movie available for download on Findinggoodd.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "director": { "type": "string" },
+        "year": { "type": "string" },
+        "rating": { "type": "number" },
+        "poster": { "type": "string" },
+        "genre": { "type": "string" },
+        "size": { "type": "string" },
+        "downloadLink": { "type": "string", "description": "URL to download the movie" },
+        "createdAt": { "type": "number", "description": "Timestamp" },
+        "updatedAt": { "type": "number", "description": "Timestamp" }
+      },
+      "required": ["title", "director", "year", "rating", "poster", "genre", "size", "downloadLink", "createdAt", "updatedAt"]
+    },
+    "movieRequest": {
+      "title": "Movie Request",
+      "description": "Represents a user request for a movie.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "fulfilled", "rejected"] },
+        "createdAt": { "type": "number", "description": "Timestamp" },
+        "updatedAt": { "type": "number", "description": "Timestamp" }
+      },
+      "required": ["title", "message", "status", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/movies/{movieId}": {
+      "schema": { "$ref": "movie" },
+      "description": "Stores all movie records."
+    },
+    "/movieRequests/{requestId}": {
+      "schema": { "$ref": "movieRequest" },
+      "description": "Stores all user movie requests."
+    }
+  }
+}
