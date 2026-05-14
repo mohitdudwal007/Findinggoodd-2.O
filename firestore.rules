@@ -49,6 +49,12 @@ service cloud.firestore {
          && data.updatedAt is timestamp;
     }
 
+    function isValidSiteSettings(data) {
+       return data.keys().hasAll(['siteName', 'updatedAt'])
+         && data.siteName is string && data.siteName.size() > 0 && data.siteName.size() <= 100
+         && data.updatedAt is timestamp;
+    }
+
     match /movies/{movieId} {
       allow read: if true;
       allow create: if isAdmin() && isValidId(movieId) && isValidMovie(incoming()) && incoming().keys().size() == 10 && incoming().createdAt == request.time && incoming().updatedAt == request.time;
@@ -80,10 +86,14 @@ service cloud.firestore {
 
     match /settings/{settingId} {
       allow read: if true;
-      allow create: if isAdmin() && isValidId(settingId) && isValidAdBanner(incoming()) && incoming().keys().size() == 4 && incoming().updatedAt == request.time;
-      allow update: if isAdmin() && isValidId(settingId) && isValidAdBanner(incoming())
-        && incoming().diff(existing()).affectedKeys().hasOnly(['content', 'isActive', 'timerSeconds', 'updatedAt'])
-        && incoming().updatedAt == request.time;
+      allow create: if isAdmin() && isValidId(settingId) && (
+        (settingId == 'adBanner' && isValidAdBanner(incoming()) && incoming().keys().size() == 4) ||
+        (settingId == 'site' && isValidSiteSettings(incoming()) && incoming().keys().size() == 2)
+      ) && incoming().updatedAt == request.time;
+      allow update: if isAdmin() && isValidId(settingId) && (
+        (settingId == 'adBanner' && isValidAdBanner(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['content', 'isActive', 'timerSeconds', 'updatedAt'])) ||
+        (settingId == 'site' && isValidSiteSettings(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['siteName', 'updatedAt']))
+      ) && incoming().updatedAt == request.time;
       allow delete: if isAdmin() && isValidId(settingId);
     }
   }

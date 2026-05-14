@@ -118,11 +118,13 @@ const Navbar = ({
   setSearchQuery,
   onBrandTripleClick,
   onRequestClick,
+  siteName,
 }: {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   onBrandTripleClick: () => void;
   onRequestClick: () => void;
+  siteName: string;
 }) => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const clickCount = useRef(0);
@@ -151,7 +153,7 @@ const Navbar = ({
         onClick={handleBrandClick}
         className={`text-2xl font-black tracking-tighter uppercase italic transition-opacity cursor-pointer select-none ${isSearchOpen ? 'opacity-0 hidden md:block' : 'opacity-100'}`}
       >
-        Findinggoodd
+        {siteName}
       </div>
       
       <div className="flex-1 flex justify-end">
@@ -463,22 +465,27 @@ const AdminDashboard = ({
   setMovies, 
   requests,
   onLogout, 
-  onClose 
+  onClose,
+  siteName
 }: { 
   movies: Movie[]; 
   setMovies: (movies: Movie[]) => void; 
   requests: any[];
   onLogout: () => void; 
   onClose: () => void; 
+  siteName: string;
 }) => {
   const [newMovie, setNewMovie] = useState({
     title: '', director: '', year: '', rating: '', poster: '', genre: '', size: '', downloadLink: ''
   });
   const [editingId, setEditingId] = useState<number | null>(null);
 
-  const [activeTab, setActiveTab] = useState<'movies' | 'requests' | 'pages' | 'ads'>('movies');
+  const [activeTab, setActiveTab] = useState<'movies' | 'requests' | 'pages' | 'ads' | 'settings'>('movies');
   const [termsContent, setTermsContent] = useState('');
   const [isSavingTerms, setIsSavingTerms] = useState(false);
+
+  const [adminSiteName, setAdminSiteName] = useState(siteName);
+  const [isSavingSiteName, setIsSavingSiteName] = useState(false);
 
   const [adContent, setAdContent] = useState('');
   const [adIsActive, setAdIsActive] = useState(false);
@@ -546,6 +553,20 @@ const AdminDashboard = ({
     }
   };
 
+  const handleSaveSiteName = async () => {
+    setIsSavingSiteName(true);
+    try {
+      await setDoc(doc(db, 'settings', 'site'), {
+        siteName: adminSiteName,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, 'settings/site');
+    } finally {
+      setIsSavingSiteName(false);
+    }
+  };
+
   const handleAddOrUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -601,7 +622,7 @@ const AdminDashboard = ({
     >
       <nav className="sticky top-0 z-50 px-6 lg:px-12 py-6 flex flex-col lg:flex-row lg:items-center justify-between border-b border-white/5 bg-[#050505]/80 backdrop-blur-md gap-6 lg:gap-4">
         <div className="text-2xl font-black tracking-tighter uppercase italic flex items-center justify-between w-full lg:w-auto">
-          <div>Findinggoodd <span className="text-white/30 text-sm hidden sm:inline">| ADMIN</span></div>
+          <div>{siteName} <span className="text-white/30 text-sm hidden sm:inline">| ADMIN</span></div>
           <div className="flex gap-4 lg:hidden">
             <button onClick={onLogout} className="text-white/50 hover:text-white">
               <LogOut size={20} />
@@ -617,6 +638,7 @@ const AdminDashboard = ({
           <button onClick={() => setActiveTab('requests')} className={`flex-1 lg:flex-none px-4 py-3 uppercase font-bold tracking-widest whitespace-nowrap snap-center ${activeTab === 'requests' ? 'bg-white text-black' : 'text-white/50 hover:bg-white/5'}`}>Requests</button>
           <button onClick={() => setActiveTab('pages')} className={`flex-1 lg:flex-none px-4 py-3 uppercase font-bold tracking-widest whitespace-nowrap snap-center ${activeTab === 'pages' ? 'bg-white text-black' : 'text-white/50 hover:bg-white/5'}`}>Terms</button>
           <button onClick={() => setActiveTab('ads')} className={`flex-1 lg:flex-none px-4 py-3 uppercase font-bold tracking-widest whitespace-nowrap snap-center ${activeTab === 'ads' ? 'bg-white text-black' : 'text-white/50 hover:bg-white/5'}`}>Ad Banner</button>
+          <button onClick={() => setActiveTab('settings')} className={`flex-1 lg:flex-none px-4 py-3 uppercase font-bold tracking-widest whitespace-nowrap snap-center ${activeTab === 'settings' ? 'bg-white text-black' : 'text-white/50 hover:bg-white/5'}`}>Settings</button>
         </div>
 
         <div className="hidden lg:flex gap-6">
@@ -835,6 +857,34 @@ const AdminDashboard = ({
         </div>
       </div>
       )}
+
+      {/* MANAGE SETTINGS HERE */}
+      {activeTab === 'settings' && (
+      <div className="px-12 py-12 max-w-5xl mx-auto w-full">
+        <h3 className="text-sm font-bold uppercase tracking-wider mb-6 text-white border-b border-white/5 pb-4">General Website Settings</h3>
+        <div className="bg-[#111] border border-white/5 p-8 flex flex-col gap-6">
+          <div>
+            <label className="text-[10px] uppercase font-bold tracking-widest text-white/50 block mb-3">Website Name</label>
+            <input 
+              type="text" 
+              value={adminSiteName}
+              onChange={(e) => setAdminSiteName(e.target.value)}
+              className="w-full bg-[#1a1a1a] border border-white/10 p-4 text-sm text-white outline-none focus:border-white/40 transition-colors"
+            />
+          </div>
+
+          <div className="flex justify-end">
+            <button 
+              onClick={handleSaveSiteName} 
+              disabled={isSavingSiteName}
+              className="px-8 py-4 bg-white text-black font-black uppercase text-xs tracking-widest hover:bg-white/90 transition-all text-center disabled:opacity-50"
+            >
+              {isSavingSiteName ? 'Saving...' : 'Save Settings'}
+            </button>
+          </div>
+        </div>
+      </div>
+      )}
     </motion.div>
   );
 };
@@ -960,6 +1010,7 @@ export default function App() {
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [adSettings, setAdSettings] = useState<any>(null);
+  const [siteName, setSiteName] = useState('Findinggoodd');
   const [downloadingMovie, setDownloadingMovie] = useState<Movie | null>(null);
 
   useEffect(() => {
@@ -970,7 +1021,20 @@ export default function App() {
     }, (error) => {
        console.error("Ad Banner fetch error", error);
     });
-    return () => unsubAd();
+
+    const unsubSite = onSnapshot(doc(db, 'settings', 'site'), (docSnap) => {
+        if (docSnap.exists() && docSnap.data().siteName) {
+            setSiteName(docSnap.data().siteName);
+            document.title = docSnap.data().siteName;
+        }
+    }, (error) => {
+       console.error("Site settings fetch error", error);
+    });
+
+    return () => {
+      unsubAd();
+      unsubSite();
+    };
   }, []);
 
   useEffect(() => {
@@ -1052,6 +1116,7 @@ export default function App() {
         setSearchQuery={setSearchQuery} 
         onBrandTripleClick={() => setShowAdmin(true)} 
         onRequestClick={() => setShowRequestModal(true)}
+        siteName={siteName}
       />
 
       <AnimatePresence>
@@ -1077,6 +1142,7 @@ export default function App() {
              requests={requests}
              onLogout={handleLogout}
              onClose={() => setShowAdmin(false)} 
+             siteName={siteName}
            />
         )}
       </AnimatePresence>
@@ -1135,7 +1201,7 @@ export default function App() {
         {/* Footer Area */}
         <footer className="flex items-center justify-between px-12 py-6 border-t border-white/5 text-[9px] tracking-widest uppercase font-bold text-white/20 mt-12 flex-col md:flex-row gap-6">
           <div className="flex gap-8">
-            <span>Copyright 2026 Findinggoodd</span>
+            <span>Copyright {new Date().getFullYear()} {siteName}</span>
             <button onClick={() => setShowTermsModal(true)} className="hover:text-white transition-colors cursor-pointer uppercase">Terms & Conditions</button>
           </div>
           <div className="flex items-center gap-4">

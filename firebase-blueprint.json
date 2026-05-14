@@ -53,12 +53,27 @@
         "updatedAt": { "type": "number", "description": "Timestamp" }
       },
       "required": ["content", "isActive", "timerSeconds", "updatedAt"]
+    },
+    "siteSettings": {
+      "title": "Site Settings",
+      "description": "General site configuration.",
+      "type": "object",
+      "properties": {
+        "siteName": { "type": "string" },
+        "updatedAt": { "type": "number", "description": "Timestamp" }
+      },
+      "required": ["siteName", "updatedAt"]
     }
   },
   "firestore": {
     "/settings/{settingId}": {
-      "schema": { "$ref": "adBanner" },
-      "description": "Stores site settings like ad banners."
+      "schema": {
+        "oneOf": [
+          { "$ref": "adBanner" },
+          { "$ref": "siteSettings" }
+        ]
+      },
+      "description": "Stores site settings like ad banners and general settings."
     },
     "/pages/{pageId}": {
       "schema": { "$ref": "page" },
