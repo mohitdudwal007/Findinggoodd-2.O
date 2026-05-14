@@ -41,9 +41,25 @@
         "updatedAt": { "type": "number", "description": "Timestamp" }
       },
       "required": ["title", "content", "updatedAt"]
+    },
+    "adBanner": {
+      "title": "Ad Banner",
+      "description": "Configuration for the ad banner.",
+      "type": "object",
+      "properties": {
+        "content": { "type": "string" },
+        "isActive": { "type": "boolean" },
+        "timerSeconds": { "type": "number" },
+        "updatedAt": { "type": "number", "description": "Timestamp" }
+      },
+      "required": ["content", "isActive", "timerSeconds", "updatedAt"]
     }
   },
   "firestore": {
+    "/settings/{settingId}": {
+      "schema": { "$ref": "adBanner" },
+      "description": "Stores site settings like ad banners."
+    },
     "/pages/{pageId}": {
       "schema": { "$ref": "page" },
       "description": "Stores site pages."

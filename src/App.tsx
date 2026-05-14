@@ -476,9 +476,14 @@ const AdminDashboard = ({
   });
   const [editingId, setEditingId] = useState<number | null>(null);
 
-  const [activeTab, setActiveTab] = useState<'movies' | 'requests' | 'pages'>('movies');
+  const [activeTab, setActiveTab] = useState<'movies' | 'requests' | 'pages' | 'ads'>('movies');
   const [termsContent, setTermsContent] = useState('');
   const [isSavingTerms, setIsSavingTerms] = useState(false);
+
+  const [adContent, setAdContent] = useState('');
+  const [adIsActive, setAdIsActive] = useState(false);
+  const [adTimerSeconds, setAdTimerSeconds] = useState(10);
+  const [isSavingAd, setIsSavingAd] = useState(false);
 
   useEffect(() => {
     if (activeTab === 'pages') {
@@ -493,6 +498,20 @@ const AdminDashboard = ({
         }
       };
       fetchTerms();
+    } else if (activeTab === 'ads') {
+      const fetchAd = async () => {
+        try {
+          const docSnap = await getDocFromServer(doc(db, 'settings', 'adBanner'));
+          if (docSnap.exists()) {
+             setAdContent(docSnap.data().content);
+             setAdIsActive(docSnap.data().isActive);
+             setAdTimerSeconds(docSnap.data().timerSeconds);
+          }
+        } catch(err) {
+           console.error("Failed to fetch ad banner:", err);
+        }
+      };
+      fetchAd();
     }
   }, [activeTab]);
 
@@ -508,6 +527,22 @@ const AdminDashboard = ({
       handleFirestoreError(err, OperationType.UPDATE, 'pages/terms');
     } finally {
       setIsSavingTerms(false);
+    }
+  };
+
+  const handleSaveAd = async () => {
+    setIsSavingAd(true);
+    try {
+      await setDoc(doc(db, 'settings', 'adBanner'), {
+        content: adContent,
+        isActive: adIsActive,
+        timerSeconds: Number(adTimerSeconds),
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, 'settings/adBanner');
+    } finally {
+      setIsSavingAd(false);
     }
   };
 
@@ -581,6 +616,7 @@ const AdminDashboard = ({
           <button onClick={() => setActiveTab('movies')} className={`flex-1 lg:flex-none px-4 py-3 uppercase font-bold tracking-widest whitespace-nowrap snap-center ${activeTab === 'movies' ? 'bg-white text-black' : 'text-white/50 hover:bg-white/5'}`}>Movies</button>
           <button onClick={() => setActiveTab('requests')} className={`flex-1 lg:flex-none px-4 py-3 uppercase font-bold tracking-widest whitespace-nowrap snap-center ${activeTab === 'requests' ? 'bg-white text-black' : 'text-white/50 hover:bg-white/5'}`}>Requests</button>
           <button onClick={() => setActiveTab('pages')} className={`flex-1 lg:flex-none px-4 py-3 uppercase font-bold tracking-widest whitespace-nowrap snap-center ${activeTab === 'pages' ? 'bg-white text-black' : 'text-white/50 hover:bg-white/5'}`}>Terms</button>
+          <button onClick={() => setActiveTab('ads')} className={`flex-1 lg:flex-none px-4 py-3 uppercase font-bold tracking-widest whitespace-nowrap snap-center ${activeTab === 'ads' ? 'bg-white text-black' : 'text-white/50 hover:bg-white/5'}`}>Ad Banner</button>
         </div>
 
         <div className="hidden lg:flex gap-6">
@@ -747,11 +783,109 @@ const AdminDashboard = ({
         </div>
       </div>
       )}
+
+      {/* MANAGE ADS HERE */}
+      {activeTab === 'ads' && (
+      <div className="px-12 py-12 max-w-5xl mx-auto w-full">
+        <h3 className="text-sm font-bold uppercase tracking-wider mb-6 text-white border-b border-white/5 pb-4">Download Ad Banner Settings</h3>
+        <div className="bg-[#111] border border-white/5 p-8 flex flex-col gap-6">
+          <div className="flex items-center gap-4 border-b border-white/5 pb-6">
+            <label className="text-[10px] uppercase font-bold tracking-widest text-white/50 flex-1 flex items-center justify-between">
+              Enable Ad Banner Before Download
+              <input 
+                 type="checkbox" 
+                 checked={adIsActive} 
+                 onChange={(e) => setAdIsActive(e.target.checked)} 
+                 className="w-5 h-5 accent-white ml-auto"
+              />
+            </label>
+          </div>
+          
+          <div>
+            <label className="text-[10px] uppercase font-bold tracking-widest text-white/50 block mb-3">Timer Duration (Seconds)</label>
+            <input 
+              type="number" 
+              value={adTimerSeconds}
+              onChange={(e) => setAdTimerSeconds(Number(e.target.value))}
+              min={0}
+              max={60}
+              className="w-full bg-[#1a1a1a] border border-white/10 p-4 text-sm text-white outline-none focus:border-white/40 transition-colors"
+            />
+          </div>
+
+          <div>
+            <label className="text-[10px] uppercase font-bold tracking-widest text-white/50 block mb-3">Ad Content (HTML/Text)</label>
+            <textarea 
+              value={adContent}
+              onChange={(e) => setAdContent(e.target.value)}
+              placeholder="<img src='ad.jpg' /> or Just text..."
+              className="w-full bg-[#1a1a1a] border border-white/10 p-6 text-sm text-white outline-none focus:border-white/40 transition-colors resize-y h-64 font-mono text-xs leading-relaxed"
+            ></textarea>
+          </div>
+
+          <div className="flex justify-end">
+            <button 
+              onClick={handleSaveAd} 
+              disabled={isSavingAd}
+              className="px-8 py-4 bg-white text-black font-black uppercase text-xs tracking-widest hover:bg-white/90 transition-all text-center disabled:opacity-50"
+            >
+              {isSavingAd ? 'Saving...' : 'Save Setting'}
+            </button>
+          </div>
+        </div>
+      </div>
+      )}
     </motion.div>
   );
 };
 
-const MovieCard: React.FC<{ movie: Movie, index: number }> = ({ movie, index }) => {
+const AdBannerModal = ({ movie, settings, onClose }: { movie: Movie, settings: any, onClose: () => void }) => {
+  const [timeLeft, setTimeLeft] = useState(settings?.timerSeconds || 10);
+
+  useEffect(() => {
+    if (timeLeft > 0) {
+      const timerId = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+      return () => clearTimeout(timerId);
+    }
+  }, [timeLeft]);
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }} 
+      animate={{ opacity: 1 }} 
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[100] bg-[#050505]/95 flex flex-col items-center justify-center p-6 backdrop-blur-sm"
+    >
+      <div className="w-full max-w-4xl bg-[#111] border border-white/10 p-4 md:p-8 relative flex flex-col h-[70vh] items-center justify-center text-center shadow-2xl">
+         {/* Render Ad Content */}
+         <div 
+           className="flex-1 w-full overflow-auto mb-8 text-white/70 ad-content-container flex flex-col items-center justify-center" 
+           dangerouslySetInnerHTML={{ __html: settings?.content || '<h3 class="text-2xl font-bold uppercase tracking-widest text-white/40">Advertisement</h3>' }} 
+         />
+         
+         <div className="mt-auto flex flex-col items-center gap-4 w-full">
+           {timeLeft > 0 ? (
+             <div className="w-full px-6 py-4 bg-[#1a1a1a] border border-white/20 text-white/50 text-xs font-bold uppercase tracking-widest">
+               Please wait {timeLeft} seconds to download...
+             </div>
+           ) : (
+             <a 
+               href={movie.downloadLink} 
+               target="_blank" 
+               rel="noopener noreferrer"
+               onClick={onClose}
+               className="w-full px-8 py-4 bg-white text-black font-black uppercase text-xs tracking-widest hover:bg-white/90 transition-all text-center flex items-center justify-center gap-2"
+             >
+               <Download size={16} /> Download
+             </a>
+           )}
+         </div>
+      </div>
+    </motion.div>
+  );
+};
+
+const MovieCard: React.FC<{ movie: Movie, index: number, onDownloadClick: (movie: Movie) => void }> = ({ movie, index, onDownloadClick }) => {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -791,10 +925,8 @@ const MovieCard: React.FC<{ movie: Movie, index: number }> = ({ movie, index }) 
           
           <AnimatePresence>
             {isHovered && (
-              <motion.a
-                href={movie.downloadLink || '#'}
-                target="_blank"
-                rel="noopener noreferrer"
+              <motion.button
+                onClick={() => onDownloadClick(movie)}
                 initial={{ opacity: 0, height: 0, marginTop: 0 }}
                 animate={{ opacity: 1, height: 'auto', marginTop: 8 }}
                 exit={{ opacity: 0, height: 0, marginTop: 0 }}
@@ -803,7 +935,7 @@ const MovieCard: React.FC<{ movie: Movie, index: number }> = ({ movie, index }) 
               >
                 <Download size={14} />
                 <span>Download</span>
-              </motion.a>
+              </motion.button>
             )}
           </AnimatePresence>
         </div>
@@ -820,6 +952,19 @@ export default function App() {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
+  const [adSettings, setAdSettings] = useState<any>(null);
+  const [downloadingMovie, setDownloadingMovie] = useState<Movie | null>(null);
+
+  useEffect(() => {
+    const unsubAd = onSnapshot(doc(db, 'settings', 'adBanner'), (docSnap) => {
+        if (docSnap.exists()) {
+            setAdSettings(docSnap.data());
+        }
+    }, (error) => {
+       console.error("Ad Banner fetch error", error);
+    });
+    return () => unsubAd();
+  }, []);
 
   useEffect(() => {
     const checkConnection = async () => {
@@ -901,6 +1046,9 @@ export default function App() {
       />
 
       <AnimatePresence>
+        {downloadingMovie && (
+          <AdBannerModal movie={downloadingMovie} settings={adSettings} onClose={() => setDownloadingMovie(null)} />
+        )}
         {showTermsModal && (
           <TermsModal onClose={() => setShowTermsModal(false)} />
         )}
@@ -940,7 +1088,18 @@ export default function App() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 flex-1">
             {filteredMovies.length > 0 ? (
               filteredMovies.map((movie, idx) => (
-                <MovieCard key={movie.id} movie={movie} index={idx} />
+                <MovieCard 
+                   key={movie.id} 
+                   movie={movie} 
+                   index={idx} 
+                   onDownloadClick={(m) => {
+                     if (adSettings && adSettings.isActive) {
+                       setDownloadingMovie(m);
+                     } else {
+                       window.open(m.downloadLink, '_blank');
+                     }
+                   }} 
+                 />
               ))
             ) : (
               <div className="col-span-full py-24 flex flex-col items-center justify-center border border-white/5 bg-[#111]">
