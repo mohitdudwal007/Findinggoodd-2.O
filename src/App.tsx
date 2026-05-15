@@ -944,12 +944,12 @@ const AdBannerModal = ({ movie, settings, onClose }: { movie: Movie, settings: a
         className="w-full max-w-4xl bg-[#111] border border-white/10 p-4 md:p-8 relative flex flex-col h-[70vh] items-center justify-center text-center shadow-2xl bg-cover bg-center"
         style={settings?.posterUrl ? { backgroundImage: `url(${settings.posterUrl})` } : {}}
       >
-         {settings?.posterUrl && <div className="absolute inset-0 bg-black/70 z-0"></div>}
+         {settings?.posterUrl && <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/40 to-transparent z-0"></div>}
          
          <div className="z-10 flex flex-col w-full h-full items-center justify-center">
            {/* Render Ad Content */}
            <div 
-             className="flex-1 w-full overflow-auto mb-8 text-white/70 ad-content-container flex flex-col items-center justify-center" 
+             className="flex-1 w-full overflow-auto mb-8 text-white flex flex-col items-center justify-center font-display" 
              dangerouslySetInnerHTML={{ __html: settings?.content || (settings?.posterUrl ? '' : '<h3 class="text-2xl font-display font-black uppercase tracking-widest text-white/40">Advertisement</h3>') }} 
            />
            
@@ -964,9 +964,9 @@ const AdBannerModal = ({ movie, settings, onClose }: { movie: Movie, settings: a
                  target="_blank" 
                  rel="noopener noreferrer"
                  onClick={onClose}
-                 className="w-full px-8 py-5 bg-white text-black font-display font-black uppercase text-sm tracking-widest hover:bg-white/90 transition-all text-center flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(255,255,255,0.2)]"
+                 className="w-full border border-white/20 bg-white/5 hover:bg-white hover:text-black transition-all duration-300 py-4 text-xs tracking-widest uppercase font-bold flex items-center justify-center gap-3 text-white backdrop-blur-md"
                >
-                 <Download size={20} /> Download Now
+                 <Download size={18} /> Download Now
                </a>
              )}
            </div>
