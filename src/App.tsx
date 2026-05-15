@@ -45,6 +45,7 @@ type Movie = {
   genre: string;
   size: string;
   downloadLink?: string;
+  watchLink?: string;
 };
 
 const INITIAL_MOVIES: Movie[] = [
@@ -471,7 +472,7 @@ const AdminDashboard = ({
   copyrightText: string;
 }) => {
   const [newMovie, setNewMovie] = useState({
-    title: '', year: '', rating: '', poster: '', genre: '', size: '', downloadLink: ''
+    title: '', year: '', rating: '', poster: '', genre: '', size: '', downloadLink: '', watchLink: ''
   });
   const [editingId, setEditingId] = useState<number | string | null>(null);
 
@@ -589,7 +590,7 @@ const AdminDashboard = ({
           updatedAt: serverTimestamp() 
         });
       }
-      setNewMovie({ title: '', year: '', rating: '', poster: '', genre: '', size: '', downloadLink: '' });
+      setNewMovie({ title: '', year: '', rating: '', poster: '', genre: '', size: '', downloadLink: '', watchLink: '' });
     } catch (error) {
       handleFirestoreError(error, editingId ? OperationType.UPDATE : OperationType.CREATE, 'movies');
     }
@@ -603,7 +604,8 @@ const AdminDashboard = ({
       poster: movie.poster,
       genre: movie.genre,
       size: movie.size,
-      downloadLink: movie.downloadLink || ''
+      downloadLink: movie.downloadLink || '',
+      watchLink: movie.watchLink || ''
     });
     setEditingId(movie.id);
   };
@@ -671,6 +673,7 @@ const AdminDashboard = ({
               <input placeholder="Genre" required value={newMovie.genre} onChange={e => setNewMovie({...newMovie, genre: e.target.value})} className="w-full bg-[#1a1a1a] border border-white/10 p-3 text-xs text-white outline-none focus:border-white/40" />
               <input placeholder="Size (e.g. 2.4 GB)" required value={newMovie.size} onChange={e => setNewMovie({...newMovie, size: e.target.value})} className="w-full bg-[#1a1a1a] border border-white/10 p-3 text-xs text-white outline-none focus:border-white/40" />
               <input placeholder="Download Link (URL)" required value={newMovie.downloadLink} onChange={e => setNewMovie({...newMovie, downloadLink: e.target.value})} className="w-full bg-[#1a1a1a] border border-white/10 p-3 text-xs text-white outline-none focus:border-white/40" />
+              <input placeholder="Watch Now Link (Optional Iframe URL)" value={newMovie.watchLink} onChange={e => setNewMovie({...newMovie, watchLink: e.target.value})} className="w-full bg-[#1a1a1a] border border-white/10 p-3 text-xs text-white outline-none focus:border-white/40" />
               
               <button type="submit" className="mt-2 px-6 py-4 bg-white text-black font-black uppercase text-xs tracking-widest hover:bg-white/90 transition-all flex items-center justify-center gap-2">
                 {editingId ? (
@@ -684,7 +687,7 @@ const AdminDashboard = ({
                 )}
               </button>
               {editingId && (
-                <button type="button" onClick={() => { setEditingId(null); setNewMovie({ title: '', year: '', rating: '', poster: '', genre: '', size: '', downloadLink: '' }); }} className="px-6 py-3 border border-white/20 text-white font-bold uppercase text-xs tracking-widest hover:bg-white/10 transition-all flex items-center justify-center gap-2">
+                <button type="button" onClick={() => { setEditingId(null); setNewMovie({ title: '', year: '', rating: '', poster: '', genre: '', size: '', downloadLink: '', watchLink: '' }); }} className="px-6 py-3 border border-white/20 text-white font-bold uppercase text-xs tracking-widest hover:bg-white/10 transition-all flex items-center justify-center gap-2">
                   Cancel Edit
                 </button>
               )}
@@ -931,7 +934,7 @@ const AdBannerModal = ({ movie, settings, onClose }: { movie: Movie, settings: a
       initial={{ opacity: 0 }} 
       animate={{ opacity: 1 }} 
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] bg-[#050505]/95 flex flex-col items-center justify-center p-6 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] bg-[#050505]/98 flex flex-col items-center justify-center p-6"
     >
       <button onClick={onClose} className="absolute top-8 right-12 text-white/50 hover:text-white transition-colors duration-300 z-10">
         <X size={24} />
@@ -941,7 +944,7 @@ const AdBannerModal = ({ movie, settings, onClose }: { movie: Movie, settings: a
         className="w-full max-w-4xl bg-[#111] border border-white/10 p-4 md:p-8 relative flex flex-col h-[70vh] items-center justify-center text-center shadow-2xl bg-cover bg-center"
         style={settings?.posterUrl ? { backgroundImage: `url(${settings.posterUrl})` } : {}}
       >
-         {settings?.posterUrl && <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-0"></div>}
+         {settings?.posterUrl && <div className="absolute inset-0 bg-black/70 z-0"></div>}
          
          <div className="z-10 flex flex-col w-full h-full items-center justify-center">
            {/* Render Ad Content */}
@@ -961,9 +964,9 @@ const AdBannerModal = ({ movie, settings, onClose }: { movie: Movie, settings: a
                  target="_blank" 
                  rel="noopener noreferrer"
                  onClick={onClose}
-                 className="w-full px-8 py-4 bg-white text-black font-black uppercase text-xs tracking-widest hover:bg-white/90 transition-all text-center flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(255,255,255,0.3)]"
+                 className="w-full px-8 py-5 bg-white text-black font-display font-black uppercase text-sm tracking-widest hover:bg-white/90 transition-all text-center flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(255,255,255,0.2)]"
                >
-                 <Download size={16} /> Download
+                 <Download size={20} /> Download Now
                </a>
              )}
            </div>
@@ -973,7 +976,43 @@ const AdBannerModal = ({ movie, settings, onClose }: { movie: Movie, settings: a
   );
 };
 
-const MovieCard: React.FC<{ movie: Movie, index: number, onDownloadClick: (movie: Movie) => void }> = React.memo(({ movie, index, onDownloadClick }) => {
+const WatchModal = ({ movie, onClose }: { movie: Movie, onClose: () => void }) => {
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }} 
+      animate={{ opacity: 1 }} 
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[100] bg-[#050505]/98 flex flex-col items-center justify-center p-4 md:p-12 backdrop-blur-xl"
+    >
+      <button onClick={onClose} className="absolute top-8 right-12 text-white/50 hover:text-white transition-colors duration-300 z-50 bg-[#111] p-2 rounded-full border border-white/10">
+        <X size={24} />
+      </button>
+
+      <div className="w-full h-full max-w-6xl aspect-video bg-black shadow-2xl relative border border-white/5 overflow-hidden">
+        {movie.watchLink ? (
+          <iframe 
+            src={movie.watchLink} 
+            className="w-full h-full" 
+            allowFullScreen 
+            frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-white/30 font-display uppercase tracking-widest text-sm">
+            Watch link not available for this title.
+          </div>
+        )}
+      </div>
+      
+      <div className="mt-8 flex flex-col items-center text-center">
+        <h2 className="text-2xl font-display font-black text-white uppercase tracking-tighter mb-2">{movie.title}</h2>
+        <p className="text-white/40 text-[10px] font-bold uppercase tracking-[0.2em]">{movie.year} • {movie.genre} • {movie.size}</p>
+      </div>
+    </motion.div>
+  );
+};
+
+const MovieCard: React.FC<{ movie: Movie, index: number, onDownloadClick: (movie: Movie) => void, onWatchClick: (movie: Movie) => void }> = React.memo(({ movie, index, onDownloadClick, onWatchClick }) => {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -999,6 +1038,19 @@ const MovieCard: React.FC<{ movie: Movie, index: number, onDownloadClick: (movie
         <div className="absolute top-4 right-4 z-20 bg-black/60 backdrop-blur-md px-2 py-1 text-[10px] font-bold border border-white/10 flex items-center gap-1 text-[#FFD700]">
           ★ <span className="text-white">{movie.rating}</span>
         </div>
+
+        {/* Floating Play Button for Mobile/Touch or Hover */}
+        {movie.watchLink && isHovered && (
+           <motion.button
+             onClick={() => onWatchClick(movie)}
+             initial={{ opacity: 0, scale: 0.8 }}
+             animate={{ opacity: 1, scale: 1 }}
+             exit={{ opacity: 0, scale: 0.8 }}
+             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 bg-white/10 backdrop-blur-md border border-white/30 text-white w-14 h-14 rounded-full flex items-center justify-center hover:bg-white hover:text-black transition-all group/play"
+           >
+             <Play fill="currentColor" size={20} className="ml-1" />
+           </motion.button>
+        )}
       </div>
       
       <div className="p-5 flex flex-col flex-1 relative z-20 bg-[#111]">
@@ -1014,21 +1066,24 @@ const MovieCard: React.FC<{ movie: Movie, index: number, onDownloadClick: (movie
             <span className="text-[9px] font-mono text-white/30 uppercase">{movie.size}</span>
           </div>
           
-          <AnimatePresence>
-            {isHovered && (
-              <motion.button
-                onClick={() => onDownloadClick(movie)}
-                initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                animate={{ opacity: 1, height: 'auto', marginTop: 8 }}
-                exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                className="w-full border border-white/20 hover:bg-white hover:text-black transition-colors duration-300 py-2 text-[10px] tracking-widest uppercase font-bold flex items-center justify-center gap-2 overflow-hidden text-white"
+          <div className="flex gap-2">
+            {movie.watchLink && (
+              <button 
+                onClick={() => onWatchClick(movie)}
+                className="flex-1 bg-white/5 border border-white/10 hover:bg-white hover:text-black transition-all duration-300 py-3 md:py-2 text-[9px] tracking-widest uppercase font-bold flex items-center justify-center gap-2 text-white"
               >
-                <Download size={14} />
-                <span>Download</span>
-              </motion.button>
+                <Play size={12} fill="currentColor" />
+                <span>Watch</span>
+              </button>
             )}
-          </AnimatePresence>
+            <button 
+              onClick={() => onDownloadClick(movie)}
+              className={`flex-1 border border-white/10 hover:bg-white/10 transition-all duration-300 py-3 md:py-2 text-[9px] tracking-widest uppercase font-bold flex items-center justify-center gap-2 ${movie.watchLink ? 'text-white/60' : 'text-white bg-white/5'}`}
+            >
+              <Download size={12} />
+              <span>Download</span>
+            </button>
+          </div>
         </div>
       </div>
     </motion.div>
@@ -1048,6 +1103,7 @@ export default function App() {
   const [siteName, setSiteName] = useState('Findinggoodd');
   const [copyrightText, setCopyrightText] = useState(`Copyright ${new Date().getFullYear()} Findinggoodd`);
   const [downloadingMovie, setDownloadingMovie] = useState<Movie | null>(null);
+  const [watchingMovie, setWatchingMovie] = useState<Movie | null>(null);
 
   useEffect(() => {
     const unsubAd = onSnapshot(doc(db, 'settings', 'adBanner'), (docSnap) => {
@@ -1165,6 +1221,9 @@ export default function App() {
         {downloadingMovie && (
           <AdBannerModal movie={downloadingMovie} settings={adSettings} onClose={() => setDownloadingMovie(null)} />
         )}
+        {watchingMovie && (
+          <WatchModal movie={watchingMovie} onClose={() => setWatchingMovie(null)} />
+        )}
         {showTermsModal && (
           <TermsModal onClose={() => setShowTermsModal(false)} />
         )}
@@ -1228,6 +1287,7 @@ export default function App() {
                        window.open(m.downloadLink, '_blank');
                      }
                    }} 
+                   onWatchClick={(m) => setWatchingMovie(m)}
                  />
               ))
             ) : (

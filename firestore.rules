@@ -14,6 +14,7 @@ service cloud.firestore {
     function isValidMovie(data) {
       return data.keys().hasAll(['title', 'year', 'rating', 'poster', 'genre', 'size', 'downloadLink', 'createdAt', 'updatedAt'])
         && (!('director' in data) || (data.director is string && data.director.size() > 0 && data.director.size() <= 200))
+        && (!('watchLink' in data) || (data.watchLink is string && data.watchLink.size() <= 2000))
         && data.title is string && data.title.size() > 0 && data.title.size() <= 200
         && data.year is string && data.year.size() == 4
         && data.rating is number && data.rating >= 0 && data.rating <= 10
@@ -59,9 +60,9 @@ service cloud.firestore {
 
     match /movies/{movieId} {
       allow read: if true;
-      allow create: if isAdmin() && isValidId(movieId) && isValidMovie(incoming()) && (incoming().keys().size() == 9 || incoming().keys().size() == 10) && incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow create: if isAdmin() && isValidId(movieId) && isValidMovie(incoming()) && (incoming().keys().size() >= 9 && incoming().keys().size() <= 11) && incoming().createdAt == request.time && incoming().updatedAt == request.time;
       allow update: if isAdmin() && isValidId(movieId) && isValidMovie(incoming()) 
-        && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'director', 'year', 'rating', 'poster', 'genre', 'size', 'downloadLink', 'updatedAt'])
+        && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'director', 'year', 'rating', 'poster', 'genre', 'size', 'downloadLink', 'watchLink', 'updatedAt'])
         && incoming().createdAt == existing().createdAt
         && incoming().updatedAt == request.time;
       allow delete: if isAdmin() && isValidId(movieId);

@@ -12,6 +12,7 @@
         "genre": { "type": "string" },
         "size": { "type": "string" },
         "downloadLink": { "type": "string", "description": "URL to download the movie" },
+        "watchLink": { "type": "string", "description": "URL for the movie iframe player" },
         "createdAt": { "type": "number", "description": "Timestamp" },
         "updatedAt": { "type": "number", "description": "Timestamp" }
       },
