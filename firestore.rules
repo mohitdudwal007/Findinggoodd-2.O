@@ -55,6 +55,7 @@ service cloud.firestore {
        return data.keys().hasAll(['siteName', 'updatedAt'])
          && data.siteName is string && data.siteName.size() > 0 && data.siteName.size() <= 100
          && (!('copyrightText' in data) || (data.copyrightText is string && data.copyrightText.size() <= 200))
+         && (!('omdbApiKey' in data) || (data.omdbApiKey is string && data.omdbApiKey.size() <= 200))
          && data.updatedAt is timestamp;
     }
 
@@ -91,11 +92,11 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isAdmin() && isValidId(settingId) && (
         (settingId == 'adBanner' && isValidAdBanner(incoming()) && (incoming().keys().size() == 4 || incoming().keys().size() == 5)) ||
-        (settingId == 'site' && isValidSiteSettings(incoming()) && (incoming().keys().size() == 2 || incoming().keys().size() == 3))
+        (settingId == 'site' && isValidSiteSettings(incoming()) && (incoming().keys().size() >= 2 && incoming().keys().size() <= 4))
       ) && incoming().updatedAt == request.time;
       allow update: if isAdmin() && isValidId(settingId) && (
         (settingId == 'adBanner' && isValidAdBanner(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['content', 'posterUrl', 'isActive', 'timerSeconds', 'updatedAt'])) ||
-        (settingId == 'site' && isValidSiteSettings(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['siteName', 'copyrightText', 'updatedAt']))
+        (settingId == 'site' && isValidSiteSettings(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['siteName', 'copyrightText', 'omdbApiKey', 'updatedAt']))
       ) && incoming().updatedAt == request.time;
       allow delete: if isAdmin() && isValidId(settingId);
     }

@@ -209,9 +209,9 @@ const Hero = () => (
         transition={{ delay: 0.2, duration: 0.8 }}
         className="flex items-center gap-4 mb-6"
       >
-        <span className="w-8 h-[2px] bg-[#FFD700]"></span>
+        <span className="w-8 h-[2px] bg-[#FFD700] shadow-[0_0_10px_rgba(255,215,0,0.8)]"></span>
         <span className="text-[10px] tracking-[0.3em] uppercase font-bold text-white/50">
-          <span className="text-white">Premium</span> Movie Archive
+          <span className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">Premium</span> Movie Archive
         </span>
       </motion.div>
       
@@ -219,10 +219,10 @@ const Hero = () => (
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-        className="text-6xl md:text-8xl lg:text-9xl font-display font-light tracking-tight leading-[0.9] mb-8"
+        className="text-6xl md:text-8xl lg:text-[10rem] font-display font-light tracking-tight leading-[0.85] mb-8"
       >
         Download <br /> 
-        <span className="font-black text-transparent bg-clip-text bg-gradient-to-b from-white via-white/80 to-white/40">
+        <span className="font-black text-transparent bg-clip-text bg-gradient-to-b from-white via-white/90 to-white/30 drop-shadow-[0_10px_20px_rgba(255,255,255,0.1)]">
           The Void.
         </span>
       </motion.h1>
@@ -503,18 +503,25 @@ const AdminDashboard = ({
     if (!adminOmdbApiKey) return alert("Please set your OMDb API Key in the Settings tab first!");
     setIsFetchingDetails(true);
     try {
-      const res = await fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(newMovie.title)}&apikey=${adminOmdbApiKey}`);
+      let fetchUrl = `https://www.omdbapi.com/?t=${encodeURIComponent(newMovie.title)}&apikey=${adminOmdbApiKey}`;
+      if (newMovie.year) {
+        fetchUrl += `&y=${encodeURIComponent(newMovie.year)}`;
+      }
+      const res = await fetch(fetchUrl);
       const data = await res.json();
       if (data.Response === "True") {
         setNewMovie(prev => ({
           ...prev,
           year: data.Year && data.Year !== 'N/A' ? data.Year : prev.year,
-          genre: data.Genre && data.Genre !== 'N/A' ? data.Genre : prev.genre,
+          genre: data.Genre && data.Genre !== 'N/A' ? data.Genre : (prev.genre || 'Unknown'),
           poster: data.Poster && data.Poster !== 'N/A' ? data.Poster : prev.poster,
           rating: data.imdbRating && data.imdbRating !== 'N/A' ? data.imdbRating : prev.rating
         }));
+        if (data.Genre === 'N/A') {
+          alert('Movie fetched, but IMDb has no genre listed for this specific movie. You may need to enter it manually.');
+        }
       } else {
-        alert("Movie not found on OMDb! Check the title spelling.");
+        alert("Movie not found on OMDb! Check the title spelling, or try entering the Year before clicking Auto-Fill to be more specific.");
       }
     } catch (e) {
       alert("Failed to fetch details from OMDb.");
@@ -1082,10 +1089,12 @@ const MovieCard: React.FC<{ movie: Movie, index: number, onDownloadClick: (movie
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-100px" }}
       transition={{ duration: 0.8, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
-      className="group relative overflow-hidden bg-[#111] border border-white/5 rounded-sm flex flex-col shadow-[0_0_15px_rgba(0,0,0,0.5)] hover:shadow-[0_0_30px_rgba(255,255,255,0.05)] transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-2 hover:border-white/10"
+      className="group relative overflow-hidden bg-[#111] border border-white/5 rounded-sm flex flex-col shadow-[0_0_15px_rgba(0,0,0,0.8)] hover:shadow-[0_0_40px_rgba(255,215,0,0.05)] transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-2 hover:border-[#FFD700]/30"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
+      <div className="absolute inset-0 bg-gradient-to-tr from-[#FFD700]/0 via-white/0 to-[#FFD700]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none z-50"></div>
+      
       <div className="aspect-[2/3] bg-[#1a1a1a] relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-black/20 to-transparent z-10 transition-colors duration-500 group-hover:from-black group-hover:via-black/60"></div>
         <img 
@@ -1094,24 +1103,27 @@ const MovieCard: React.FC<{ movie: Movie, index: number, onDownloadClick: (movie
           loading="lazy"
           decoding="async"
           referrerPolicy="no-referrer"
-          className="absolute inset-0 w-full h-full object-cover transition-all duration-[1000ms] ease-[cubic-bezier(0.16,1,0.3,1)] z-0 grayscale-[0.3] group-hover:grayscale-0 group-hover:scale-105"
+          className="absolute inset-0 w-full h-full object-cover transition-all duration-[1500ms] ease-[cubic-bezier(0.16,1,0.3,1)] z-0 grayscale-[0.4] group-hover:grayscale-0 group-hover:scale-110"
         />
-        <div className="absolute top-4 right-4 z-20 bg-black/80 backdrop-blur-md px-3 py-1.5 text-[10px] font-bold border border-white/10 flex items-center gap-1.5 text-[#FFD700] rounded-sm">
+        <div className="absolute top-4 right-4 z-20 bg-black/80 backdrop-blur-md px-3 py-1.5 text-[10px] font-bold border border-white/10 flex items-center gap-1.5 text-[#FFD700] rounded-sm shadow-[0_4px_10px_rgba(0,0,0,0.5)]">
           ★ <span className="text-white">{movie.rating}</span>
         </div>
 
         {/* Floating Play Button for Mobile/Touch or Hover */}
-        {movie.watchLink && isHovered && (
-           <motion.button
-             onClick={() => onWatchClick(movie)}
-             initial={{ opacity: 0, scale: 0.8 }}
-             animate={{ opacity: 1, scale: 1 }}
-             exit={{ opacity: 0, scale: 0.8 }}
-             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 bg-white/10 backdrop-blur-md border border-white/30 text-white w-16 h-16 rounded-full flex items-center justify-center hover:bg-white hover:text-black transition-all group/play shadow-[0_0_20px_rgba(255,255,255,0.2)]"
-           >
-             <Play fill="currentColor" size={24} className="ml-1" />
-           </motion.button>
-        )}
+        <AnimatePresence>
+          {movie.watchLink && isHovered && (
+             <motion.button
+               onClick={() => onWatchClick(movie)}
+               initial={{ opacity: 0, scale: 0.8, filter: "blur(4px)" }}
+               animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+               exit={{ opacity: 0, scale: 0.8, filter: "blur(4px)" }}
+               transition={{ duration: 0.3 }}
+               className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 bg-white/10 backdrop-blur-md border border-white/30 text-white w-16 h-16 rounded-full flex items-center justify-center hover:bg-white hover:text-black transition-all group/play shadow-[0_0_30px_rgba(255,255,255,0.2)]"
+             >
+               <Play fill="currentColor" size={24} className="ml-1" />
+             </motion.button>
+          )}
+        </AnimatePresence>
       </div>
       
       <div className="p-5 flex flex-col flex-1 relative z-20 bg-gradient-to-b from-[#0a0a0a] to-[#050505] group-hover:from-[#111] transition-colors duration-500">
@@ -1280,6 +1292,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#050505] text-[#e0e0e0] font-sans overflow-x-hidden relative selection:bg-white selection:text-black">
+      <div className="fixed inset-0 pointer-events-none bg-noise opacity-[0.03] z-[100] mix-blend-overlay"></div>
       <Navbar 
         searchQuery={searchQuery} 
         setSearchQuery={setSearchQuery} 
