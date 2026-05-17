@@ -934,28 +934,28 @@ const AdBannerModal = ({ movie, settings, onClose }: { movie: Movie, settings: a
       initial={{ opacity: 0 }} 
       animate={{ opacity: 1 }} 
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] bg-[#050505]/98 flex flex-col items-center justify-center p-6"
+      className="fixed inset-0 z-[100] bg-[#050505]/98 flex flex-col items-center justify-center p-4 md:p-6"
     >
-      <button onClick={onClose} className="absolute top-8 right-12 text-white/50 hover:text-white transition-colors duration-300 z-10">
-        <X size={24} />
+      <button onClick={onClose} className="absolute top-4 right-4 md:top-8 md:right-12 text-white/50 hover:text-white transition-colors duration-300 z-50 bg-[#111] p-2 rounded-full border border-white/10">
+        <X size={20} className="md:w-6 md:h-6" />
       </button>
 
       <div 
-        className="w-full max-w-4xl bg-[#111] border border-white/10 p-4 md:p-8 relative flex flex-col h-[70vh] items-center justify-center text-center shadow-2xl bg-cover bg-center"
+        className="w-full max-w-4xl bg-[#111] border border-white/10 p-5 md:p-8 relative flex flex-col min-h-[60vh] max-h-[85vh] md:h-[70vh] items-center justify-center text-center shadow-2xl bg-cover bg-center overflow-hidden"
         style={settings?.posterUrl ? { backgroundImage: `url(${settings.posterUrl})` } : {}}
       >
-         {settings?.posterUrl && <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/40 to-transparent z-0"></div>}
+         {settings?.posterUrl && <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/60 to-transparent z-0"></div>}
          
-         <div className="z-10 flex flex-col w-full h-full items-center justify-center">
+         <div className="z-10 flex flex-col w-full h-full items-center justify-center overflow-hidden relative">
            {/* Render Ad Content */}
            <div 
-             className="flex-1 w-full overflow-auto mb-8 text-white flex flex-col items-center justify-center font-display" 
-             dangerouslySetInnerHTML={{ __html: settings?.content || (settings?.posterUrl ? '' : '<h3 class="text-2xl font-display font-black uppercase tracking-widest text-white/40">Advertisement</h3>') }} 
+             className="flex-1 w-full overflow-y-auto mb-6 md:mb-8 text-white flex flex-col items-center justify-center font-display scrollbar-thin scrollbar-thumb-white/10" 
+             dangerouslySetInnerHTML={{ __html: settings?.content || (settings?.posterUrl ? '' : '<h3 class="text-xl md:text-2xl font-display font-black uppercase tracking-widest text-white/40">Advertisement</h3>') }} 
            />
            
-           <div className="mt-auto flex flex-col items-center gap-4 w-full">
+           <div className="mt-auto flex flex-col items-center gap-4 w-full max-w-sm">
              {timeLeft > 0 ? (
-               <div className="w-full px-6 py-4 bg-[#1a1a1a]/80 backdrop-blur-md border border-white/20 text-white/50 text-xs font-bold uppercase tracking-widest">
+               <div className="w-full px-4 py-4 md:px-6 md:py-4 bg-[#1a1a1a]/90 backdrop-blur-md border border-white/20 text-white/50 text-[10px] md:text-xs font-bold uppercase tracking-widest">
                  Please wait {timeLeft} seconds to download...
                </div>
              ) : (
@@ -964,7 +964,7 @@ const AdBannerModal = ({ movie, settings, onClose }: { movie: Movie, settings: a
                  target="_blank" 
                  rel="noopener noreferrer"
                  onClick={onClose}
-                 className="w-full border border-white/20 bg-white/5 hover:bg-white hover:text-black transition-all duration-300 py-4 text-xs tracking-widest uppercase font-bold flex items-center justify-center gap-3 text-white backdrop-blur-md"
+                 className="w-full border border-white/20 bg-white hover:bg-white/90 text-black transition-all duration-300 py-4 md:py-5 text-[10px] md:text-xs tracking-[0.2em] uppercase font-black flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(255,255,255,0.1)]"
                >
                  <Download size={18} /> Download Now
                </a>
