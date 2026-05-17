@@ -198,29 +198,31 @@ const Navbar = ({
 };
 
 const Hero = () => (
-  <section className="relative h-[70vh] min-h-[600px] flex items-center px-6 md:px-12 xl:px-24 overflow-hidden mb-12">
+  <section className="relative h-[70vh] min-h-[600px] flex items-center px-6 md:px-12 xl:px-24 overflow-hidden mb-12 border-b border-white/5">
+    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/[0.04] via-transparent to-transparent"></div>
     <div className="absolute -left-4 top-24 text-[120px] lg:text-[180px] font-display font-black text-white/5 select-none pointer-events-none z-0 tracking-tighter">FEATURED</div>
     
     <div className="max-w-5xl relative z-10 w-full mt-24">
-      <motion.p 
+      <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.8 }}
-        className="text-[10px] tracking-widest uppercase font-bold text-white/40 mb-6 flex items-center gap-4"
+        className="flex items-center gap-4 mb-6"
       >
-        <span>Curated Cinema</span>
-        <span className="w-1 h-1 bg-white/20 rounded-full"></span>
-        <span>High Quality</span>
-      </motion.p>
+        <span className="w-8 h-[2px] bg-[#FFD700]"></span>
+        <span className="text-[10px] tracking-[0.3em] uppercase font-bold text-white/50">
+          <span className="text-white">Premium</span> Movie Archive
+        </span>
+      </motion.div>
       
       <motion.h1 
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-        className="text-6xl md:text-8xl lg:text-9xl font-display font-light tracking-tight leading-none mb-8"
+        className="text-6xl md:text-8xl lg:text-9xl font-display font-light tracking-tight leading-[0.9] mb-8"
       >
         Download <br /> 
-        <span className="font-black text-white">
+        <span className="font-black text-transparent bg-clip-text bg-gradient-to-b from-white via-white/80 to-white/40">
           The Void.
         </span>
       </motion.h1>
@@ -230,7 +232,7 @@ const Hero = () => (
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6, duration: 1 }}
       >
-        <button className="px-10 py-5 bg-white text-black font-black uppercase text-xs tracking-widest hover:bg-white/90 transition-all flex items-center gap-4 group">
+        <button className="px-10 py-5 bg-white text-black font-black uppercase text-[10px] md:text-xs tracking-widest hover:bg-white/90 hover:scale-[1.02] transition-all duration-300 flex items-center gap-4 group">
           <span>Explore Catalog</span>
           <Play size={14} fill="currentColor" className="group-hover:translate-x-1 transition-transform" />
         </button>
@@ -239,11 +241,13 @@ const Hero = () => (
 
     {/* Abstract geometric decoration */}
     <motion.div 
-      initial={{ opacity: 0, rotate: 10, scale: 0.9 }}
+      initial={{ opacity: 0, rotate: 10, scale: 0.8 }}
       animate={{ opacity: 1, rotate: 0, scale: 1 }}
-      transition={{ delay: 0.5, duration: 1.5, ease: "easeOut" }}
-      className="absolute right-[-10%] top-[20%] w-[50vw] h-[50vw] border-[1px] border-white/5 rounded-full mix-blend-screen opacity-30 pointer-events-none hidden lg:block"
-    />
+      transition={{ delay: 0.5, duration: 2, ease: "easeOut" }}
+      className="absolute right-[5%] top-[10%] w-[40vw] h-[40vw] border-[1px] border-white/10 rounded-full mix-blend-screen opacity-50 pointer-events-none hidden lg:block"
+    >
+        <div className="absolute inset-0 bg-white/[0.02] blur-3xl rounded-full"></div>
+    </motion.div>
   </section>
 );
 
@@ -461,7 +465,8 @@ const AdminDashboard = ({
   onLogout, 
   onClose,
   siteName,
-  copyrightText
+  copyrightText,
+  omdbApiKey
 }: { 
   movies: Movie[]; 
   setMovies: (movies: Movie[]) => void; 
@@ -470,6 +475,7 @@ const AdminDashboard = ({
   onClose: () => void; 
   siteName: string;
   copyrightText: string;
+  omdbApiKey: string;
 }) => {
   const [newMovie, setNewMovie] = useState({
     title: '', year: '', rating: '', poster: '', genre: '', size: '', downloadLink: '', watchLink: ''
@@ -482,12 +488,40 @@ const AdminDashboard = ({
 
   const [adminSiteName, setAdminSiteName] = useState(siteName);
   const [adminCopyrightText, setAdminCopyrightText] = useState(copyrightText || '');
+  const [adminOmdbApiKey, setAdminOmdbApiKey] = useState(omdbApiKey || '');
   const [isSavingSiteName, setIsSavingSiteName] = useState(false);
+  const [isFetchingDetails, setIsFetchingDetails] = useState(false);
 
   useEffect(() => {
     setAdminSiteName(siteName);
     setAdminCopyrightText(copyrightText || '');
-  }, [siteName, copyrightText]);
+    setAdminOmdbApiKey(omdbApiKey || '');
+  }, [siteName, copyrightText, omdbApiKey]);
+
+  const handleAutoFill = async () => {
+    if (!newMovie.title) return alert("Please enter a movie title first!");
+    if (!adminOmdbApiKey) return alert("Please set your OMDb API Key in the Settings tab first!");
+    setIsFetchingDetails(true);
+    try {
+      const res = await fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(newMovie.title)}&apikey=${adminOmdbApiKey}`);
+      const data = await res.json();
+      if (data.Response === "True") {
+        setNewMovie(prev => ({
+          ...prev,
+          year: data.Year && data.Year !== 'N/A' ? data.Year : prev.year,
+          genre: data.Genre && data.Genre !== 'N/A' ? data.Genre : prev.genre,
+          poster: data.Poster && data.Poster !== 'N/A' ? data.Poster : prev.poster,
+          rating: data.imdbRating && data.imdbRating !== 'N/A' ? data.imdbRating : prev.rating
+        }));
+      } else {
+        alert("Movie not found on OMDb! Check the title spelling.");
+      }
+    } catch (e) {
+      alert("Failed to fetch details from OMDb.");
+    } finally {
+      setIsFetchingDetails(false);
+    }
+  };
 
   const [adContent, setAdContent] = useState('');
   const [adPosterUrl, setAdPosterUrl] = useState('');
@@ -564,6 +598,7 @@ const AdminDashboard = ({
       await setDoc(doc(db, 'settings', 'site'), {
         siteName: adminSiteName,
         copyrightText: adminCopyrightText,
+        omdbApiKey: adminOmdbApiKey,
         updatedAt: serverTimestamp()
       }, { merge: true });
     } catch (err) {
@@ -666,7 +701,12 @@ const AdminDashboard = ({
               {editingId ? 'Edit Title' : 'Add New Title'}
             </h3>
             <form onSubmit={handleAddOrUpdate} className="flex flex-col gap-4">
-              <input placeholder="Title" required value={newMovie.title} onChange={e => setNewMovie({...newMovie, title: e.target.value})} className="w-full bg-[#1a1a1a] border border-white/10 p-3 text-xs text-white outline-none focus:border-white/40" />
+              <div className="flex gap-2">
+                <input placeholder="Title" required value={newMovie.title} onChange={e => setNewMovie({...newMovie, title: e.target.value})} className="flex-1 bg-[#1a1a1a] border border-white/10 p-3 text-xs text-white outline-none focus:border-white/40" />
+                <button type="button" onClick={handleAutoFill} disabled={isFetchingDetails} className="bg-white text-black px-4 font-bold uppercase tracking-widest text-[10px] hover:bg-white/90 disabled:opacity-50 transition-colors whitespace-nowrap">
+                  {isFetchingDetails ? 'Fetching...' : 'Auto-Fill 🪄'}
+                </button>
+              </div>
               <input placeholder="Year" required value={newMovie.year} onChange={e => setNewMovie({...newMovie, year: e.target.value})} className="w-full bg-[#1a1a1a] border border-white/10 p-3 text-xs text-white outline-none focus:border-white/40" />
               <input placeholder="Rating (0-10)" required type="number" step="0.1" value={newMovie.rating} onChange={e => setNewMovie({...newMovie, rating: e.target.value})} className="w-full bg-[#1a1a1a] border border-white/10 p-3 text-xs text-white outline-none focus:border-white/40" />
               <input placeholder="Poster URL" required value={newMovie.poster} onChange={e => setNewMovie({...newMovie, poster: e.target.value})} className="w-full bg-[#1a1a1a] border border-white/10 p-3 text-xs text-white outline-none focus:border-white/40" />
@@ -903,7 +943,22 @@ const AdminDashboard = ({
             </div>
           </div>
 
-          <div className="flex justify-end">
+          <div className="mt-6">
+            <label className="text-[10px] uppercase font-bold tracking-widest text-white/50 block mb-3">OMDb API Key (Optional auto-fetch setup)</label>
+            <div className="flex gap-4 items-center">
+              <input 
+                type="text" 
+                value={adminOmdbApiKey}
+                onChange={(e) => setAdminOmdbApiKey(e.target.value)}
+                className="flex-1 bg-[#1a1a1a] border border-white/10 p-4 text-sm text-white outline-none focus:border-white/40 transition-colors"
+                placeholder="Ex. 8df9d3a"
+              />
+              <a href="https://www.omdbapi.com/apikey.aspx" target="_blank" rel="noopener noreferrer" className="text-[10px] uppercase tracking-widest font-bold text-white/40 hover:text-white border-b border-white/20 pb-1">Get Free Key</a>
+            </div>
+            <p className="text-white/30 text-[10px] mt-2">Required for the "Auto-Fill 🪄" feature to work when adding movies.</p>
+          </div>
+
+          <div className="flex justify-end mt-8">
             <button 
               onClick={handleSaveSiteName} 
               disabled={isSavingSiteName}
@@ -982,13 +1037,13 @@ const WatchModal = ({ movie, onClose }: { movie: Movie, onClose: () => void }) =
       initial={{ opacity: 0 }} 
       animate={{ opacity: 1 }} 
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] bg-[#050505]/98 flex flex-col items-center justify-center p-4 md:p-12 backdrop-blur-xl"
+      className="fixed inset-0 z-[100] bg-[#050505]/98 flex flex-col items-center justify-center p-4 md:p-12 backdrop-blur-3xl"
     >
-      <button onClick={onClose} className="absolute top-8 right-12 text-white/50 hover:text-white transition-colors duration-300 z-50 bg-[#111] p-2 rounded-full border border-white/10">
-        <X size={24} />
+      <button onClick={onClose} className="absolute top-6 right-6 md:top-10 md:right-10 text-white/50 hover:text-white hover:scale-110 active:scale-95 transition-all duration-300 z-50 bg-[#111] p-3 rounded-full border border-white/10 shadow-[0_0_20px_rgba(255,255,255,0.05)]">
+        <X size={20} />
       </button>
 
-      <div className="w-full h-full max-w-6xl aspect-video bg-black shadow-2xl relative border border-white/5 overflow-hidden">
+      <div className="w-full h-full max-h-[70vh] max-w-6xl aspect-video bg-black shadow-[0_0_50px_rgba(0,0,0,0.8)] rounded-sm relative border border-white/10 overflow-hidden ring-1 ring-white/5">
         {movie.watchLink ? (
           <iframe 
             src={movie.watchLink} 
@@ -998,15 +1053,21 @@ const WatchModal = ({ movie, onClose }: { movie: Movie, onClose: () => void }) =
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-white/30 font-display uppercase tracking-widest text-sm">
+          <div className="w-full h-full flex items-center justify-center text-white/30 font-display uppercase tracking-widest text-sm bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white/5 via-transparent to-transparent">
             Watch link not available for this title.
           </div>
         )}
       </div>
       
       <div className="mt-8 flex flex-col items-center text-center">
-        <h2 className="text-2xl font-display font-black text-white uppercase tracking-tighter mb-2">{movie.title}</h2>
-        <p className="text-white/40 text-[10px] font-bold uppercase tracking-[0.2em]">{movie.year} • {movie.genre} • {movie.size}</p>
+        <h2 className="text-3xl md:text-4xl font-display font-black text-white uppercase tracking-tighter mb-3 drop-shadow-md">{movie.title}</h2>
+        <div className="flex items-center gap-3 text-white/40 text-[10px] font-bold uppercase tracking-[0.2em] bg-white/5 px-4 py-2 rounded-full border border-white/5">
+            <span>{movie.year}</span>
+            <span className="w-1 h-1 bg-white/20 rounded-full"></span>
+            <span>{movie.genre}</span>
+            <span className="w-1 h-1 bg-white/20 rounded-full"></span>
+            <span className="text-[#FFD700] flex items-center gap-1">★ {movie.rating}</span>
+        </div>
       </div>
     </motion.div>
   );
@@ -1021,21 +1082,21 @@ const MovieCard: React.FC<{ movie: Movie, index: number, onDownloadClick: (movie
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-100px" }}
       transition={{ duration: 0.8, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
-      className="group relative overflow-hidden bg-[#111] border border-white/5 rounded-sm flex flex-col shadow-2xl transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-2"
+      className="group relative overflow-hidden bg-[#111] border border-white/5 rounded-sm flex flex-col shadow-[0_0_15px_rgba(0,0,0,0.5)] hover:shadow-[0_0_30px_rgba(255,255,255,0.05)] transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-2 hover:border-white/10"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="aspect-[2/3] bg-[#1a1a1a] relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-t from-[#111] via-black/20 to-transparent z-10"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-black/20 to-transparent z-10 transition-colors duration-500 group-hover:from-black group-hover:via-black/60"></div>
         <img 
           src={movie.poster} 
           alt={movie.title}
           loading="lazy"
           decoding="async"
           referrerPolicy="no-referrer"
-          className="absolute inset-0 w-full h-full object-cover transition-all duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)] z-0 grayscale group-hover:grayscale-0 group-hover:scale-105"
+          className="absolute inset-0 w-full h-full object-cover transition-all duration-[1000ms] ease-[cubic-bezier(0.16,1,0.3,1)] z-0 grayscale-[0.3] group-hover:grayscale-0 group-hover:scale-105"
         />
-        <div className="absolute top-4 right-4 z-20 bg-black/60 backdrop-blur-md px-2 py-1 text-[10px] font-bold border border-white/10 flex items-center gap-1 text-[#FFD700]">
+        <div className="absolute top-4 right-4 z-20 bg-black/80 backdrop-blur-md px-3 py-1.5 text-[10px] font-bold border border-white/10 flex items-center gap-1.5 text-[#FFD700] rounded-sm">
           ★ <span className="text-white">{movie.rating}</span>
         </div>
 
@@ -1046,31 +1107,31 @@ const MovieCard: React.FC<{ movie: Movie, index: number, onDownloadClick: (movie
              initial={{ opacity: 0, scale: 0.8 }}
              animate={{ opacity: 1, scale: 1 }}
              exit={{ opacity: 0, scale: 0.8 }}
-             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 bg-white/10 backdrop-blur-md border border-white/30 text-white w-14 h-14 rounded-full flex items-center justify-center hover:bg-white hover:text-black transition-all group/play"
+             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 bg-white/10 backdrop-blur-md border border-white/30 text-white w-16 h-16 rounded-full flex items-center justify-center hover:bg-white hover:text-black transition-all group/play shadow-[0_0_20px_rgba(255,255,255,0.2)]"
            >
-             <Play fill="currentColor" size={20} className="ml-1" />
+             <Play fill="currentColor" size={24} className="ml-1" />
            </motion.button>
         )}
       </div>
       
-      <div className="p-5 flex flex-col flex-1 relative z-20 bg-[#111]">
-        <h3 className="text-sm font-bold uppercase tracking-wider mb-1 text-white">
+      <div className="p-5 flex flex-col flex-1 relative z-20 bg-gradient-to-b from-[#0a0a0a] to-[#050505] group-hover:from-[#111] transition-colors duration-500">
+        <h3 className="text-sm font-bold uppercase tracking-wider mb-1 text-white line-clamp-1 group-hover:text-white/90">
           {movie.title}
         </h3>
         <p className="text-[10px] text-white/40 mb-4 tracking-wide font-bold">
-          {movie.year} <span className="mx-1">•</span> {movie.genre}
+          {movie.year} <span className="mx-1 opacity-50">•</span> {(movie.genre || '').split(',')[0] || 'Unknown'}
         </p>
         
-        <div className="mt-auto flex flex-col gap-3">
-          <div className="flex justify-between items-center">
-            <span className="text-[9px] font-mono text-white/30 uppercase">{movie.size}</span>
+        <div className="mt-auto flex flex-col gap-4">
+          <div className="flex justify-between items-center -mb-2">
+            <span className="text-[9px] font-mono text-white/30 uppercase border border-white/5 px-2 py-0.5 rounded-sm">{movie.size}</span>
           </div>
           
           <div className="flex gap-2">
             {movie.watchLink && (
               <button 
                 onClick={() => onWatchClick(movie)}
-                className="flex-1 bg-white/5 border border-white/10 hover:bg-white hover:text-black transition-all duration-300 py-3 md:py-2 text-[9px] tracking-widest uppercase font-bold flex items-center justify-center gap-2 text-white"
+                className="flex-1 bg-white/5 border border-white/10 hover:bg-white hover:text-black transition-all duration-300 py-3 md:py-2.5 text-[9px] tracking-widest uppercase font-bold flex items-center justify-center gap-2 text-white/90 hover:shadow-[0_0_15px_rgba(255,255,255,0.4)] rounded-sm"
               >
                 <Play size={12} fill="currentColor" />
                 <span>Watch</span>
@@ -1078,10 +1139,10 @@ const MovieCard: React.FC<{ movie: Movie, index: number, onDownloadClick: (movie
             )}
             <button 
               onClick={() => onDownloadClick(movie)}
-              className={`flex-1 border border-white/10 hover:bg-white/10 transition-all duration-300 py-3 md:py-2 text-[9px] tracking-widest uppercase font-bold flex items-center justify-center gap-2 ${movie.watchLink ? 'text-white/60' : 'text-white bg-white/5'}`}
+              className={`flex-1 border border-white/10 hover:bg-white/10 transition-all duration-300 py-3 md:py-2.5 text-[9px] tracking-widest uppercase font-bold flex items-center justify-center gap-2 rounded-sm ${movie.watchLink ? 'text-white/50' : 'text-white bg-white/5 hover:text-white/90 hover:shadow-[0_0_15px_rgba(255,255,255,0.1)]'}`}
             >
               <Download size={12} />
-              <span>Download</span>
+              <span>Get</span>
             </button>
           </div>
         </div>
@@ -1102,8 +1163,13 @@ export default function App() {
   const [adSettings, setAdSettings] = useState<any>(null);
   const [siteName, setSiteName] = useState('Findinggoodd');
   const [copyrightText, setCopyrightText] = useState(`Copyright ${new Date().getFullYear()} Findinggoodd`);
+  const [omdbApiKey, setOmdbApiKey] = useState('');
   const [downloadingMovie, setDownloadingMovie] = useState<Movie | null>(null);
   const [watchingMovie, setWatchingMovie] = useState<Movie | null>(null);
+  const [selectedGenre, setSelectedGenre] = useState<string>('All');
+
+  // Compute available genres dynamically
+  const availableGenres = ['All', ...Array.from(new Set(movies.flatMap(m => (m.genre || '').split(',').map(g => g.trim()))))].filter(Boolean);
 
   useEffect(() => {
     const unsubAd = onSnapshot(doc(db, 'settings', 'adBanner'), (docSnap) => {
@@ -1123,6 +1189,9 @@ export default function App() {
             }
             if (data.copyrightText !== undefined) {
                 setCopyrightText(data.copyrightText);
+            }
+            if (data.omdbApiKey !== undefined) {
+                setOmdbApiKey(data.omdbApiKey);
             }
         }
     }, (error) => {
@@ -1204,7 +1273,9 @@ export default function App() {
 
   const filteredMovies = movies.filter(movie => {
     const q = searchQuery.toLowerCase();
-    return movie.title.toLowerCase().includes(q) || movie.genre.toLowerCase().includes(q);
+    const searchMatch = (movie.title || '').toLowerCase().includes(q) || (movie.genre || '').toLowerCase().includes(q);
+    const genreMatch = selectedGenre === 'All' || (movie.genre || '').toLowerCase().includes(selectedGenre.toLowerCase());
+    return searchMatch && genreMatch;
   });
 
   return (
@@ -1245,6 +1316,7 @@ export default function App() {
              onClose={() => setShowAdmin(false)} 
              siteName={siteName}
              copyrightText={copyrightText}
+             omdbApiKey={omdbApiKey}
            />
         )}
       </AnimatePresence>
@@ -1253,7 +1325,7 @@ export default function App() {
         <Hero />
         
         <section className="px-6 md:px-12 xl:px-24 pb-24">
-          <div className="flex justify-between items-end mb-12 border-b border-white/5 pb-4">
+          <div className="flex flex-col md:flex-row md:justify-between md:items-end mb-8 border-b border-white/5 pb-4 gap-4">
             <h2 className="text-2xl font-display font-black tracking-tighter uppercase">
               Latest Additions
             </h2>
@@ -1262,15 +1334,34 @@ export default function App() {
             </button>
           </div>
           
+          {/* Genre Filters */}
+          {availableGenres.length > 1 && (
+            <div className="flex gap-2 overflow-x-auto pb-6 mb-2 scrollbar-none snap-x mask-fade-edges">
+              {availableGenres.map(genre => (
+                <button
+                  key={genre}
+                  onClick={() => setSelectedGenre(genre)}
+                  className={`snap-center shrink-0 px-5 py-2.5 rounded-full text-[10px] uppercase tracking-widest font-bold transition-all duration-300 border ${selectedGenre === genre ? 'bg-white text-black border-white' : 'bg-[#111] text-white/50 border-white/10 hover:border-white/30 hover:text-white'}`}
+                >
+                  {genre}
+                </button>
+              ))}
+            </div>
+          )}
+          
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 flex-1">
             {isLoadingMovies ? (
-              // Loading Skeleton
-              Array.from({ length: 10 }).map((_, i) => (
-                <div key={i} className="aspect-[2/3] bg-[#111] animate-pulse relative overflow-hidden border border-white/5">
-                  <div className="absolute top-4 right-4 bg-[#1a1a1a] w-12 h-4"></div>
-                  <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black via-black/80 to-transparent">
-                    <div className="h-6 w-3/4 bg-[#1a1a1a] mb-2"></div>
-                    <div className="h-4 w-1/2 bg-[#1a1a1a]"></div>
+              // Enhanced Loading Skeleton
+              Array.from({ length: 15 }).map((_, i) => (
+                <div key={i} className="aspect-[2/3] bg-[#0a0a0a] animate-pulse relative overflow-hidden border border-white/5 rounded-sm flex flex-col justify-end">
+                  <div className="absolute top-4 right-4 bg-[#1a1a1a] w-10 h-5 border border-white/5"></div>
+                  <div className="p-5 flex flex-col w-full relative z-10 bg-gradient-to-t from-[#111] via-[#111]/80 to-transparent pt-12">
+                     <div className="h-4 w-3/4 bg-[#1a1a1a] mb-2 rounded-sm"></div>
+                     <div className="h-2 w-1/3 bg-[#1a1a1a] mb-5 rounded-sm"></div>
+                     <div className="flex gap-2 w-full mt-2">
+                       <div className="flex-1 h-8 bg-white/5 rounded-sm"></div>
+                       <div className="flex-1 h-8 bg-white/5 rounded-sm"></div>
+                     </div>
                   </div>
                 </div>
               ))
@@ -1291,27 +1382,55 @@ export default function App() {
                  />
               ))
             ) : (
-              <div className="col-span-full py-24 flex flex-col items-center justify-center border border-white/5 bg-[#111]">
-                <div className="text-[10px] tracking-widest uppercase font-bold text-white/40 mb-2">
-                  {searchQuery ? 'No Results Found' : 'No Movies'}
+              <div className="col-span-full py-32 flex flex-col items-center justify-center border border-white/5 bg-[#0a0a0a] rounded-sm relative overflow-hidden">
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white/[0.03] via-transparent to-transparent"></div>
+                
+                <h3 className="text-3xl md:text-5xl font-display font-black tracking-tighter uppercase text-white/20 mb-4 z-10">
+                  {searchQuery ? 'Missing Title' : 'Empty Vault'}
+                </h3>
+                
+                <div className="text-[10px] tracking-[0.2em] uppercase font-bold text-[#FFD700]/50 mb-2 z-10 flex border border-[#FFD700]/10 bg-[#FFD700]/5 px-4 py-2 rounded-full">
+                  {searchQuery ? `No signals found ` : "Awaiting transmissions"}
                 </div>
-                <div className="text-xl font-light tracking-tight italic text-white/70 text-center">
-                  {searchQuery ? `We couldn't find anything matching "${searchQuery}"` : "No movies have been added yet."}
-                </div>
+                
+                <p className="text-sm tracking-wide text-white/40 text-center max-w-md z-10 mt-4 leading-relaxed">
+                  {searchQuery 
+                    ? `Our deep space scans couldn't fetch any records matching "${searchQuery}". Try modifying your search parameters.` 
+                    : "The archive is currently completely desolate. Stand by for the next wave of movie uploads."}
+                </p>
+                
+                {searchQuery && (
+                  <button 
+                    onClick={() => { setSearchQuery(''); setSelectedGenre('All'); }}
+                    className="mt-8 px-6 py-3 border border-white/20 hover:bg-white hover:text-black transition-all uppercase text-[10px] font-bold tracking-widest z-10"
+                  >
+                    Clear Search Scanners
+                  </button>
+                )}
               </div>
             )}
           </div>
         </section>
 
         {/* Footer Area */}
-        <footer className="flex items-center justify-between px-12 py-6 border-t border-white/5 text-[9px] tracking-widest uppercase font-bold text-white/20 mt-12 flex-col md:flex-row gap-6">
-          <div className="flex gap-8">
-            <span>{copyrightText}</span>
-            <button onClick={() => setShowTermsModal(true)} className="hover:text-white transition-colors cursor-pointer uppercase">Terms & Conditions</button>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span className="text-white/40 uppercase">Network Status: High Speed</span>
+        <footer className="border-t border-white/5 mt-auto relative overflow-hidden bg-gradient-to-b from-transparent to-black/50">
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+          <div className="px-6 md:px-12 xl:px-24 py-12 flex flex-col md:flex-row items-center justify-between gap-8 md:gap-4 text-[10px] tracking-widest uppercase font-bold text-white/40">
+            <div className="flex flex-col md:flex-row items-center gap-6 md:gap-12 text-center md:text-left">
+              <span className="text-white hover:text-white/80 transition-colors drop-shadow-md">{copyrightText}</span>
+              <button 
+                onClick={() => setShowTermsModal(true)} 
+                className="hover:text-white transition-colors cursor-pointer uppercase border-b border-transparent hover:border-white/20 pb-1"
+              >
+                Terms & Conditions
+              </button>
+            </div>
+            <div className="flex items-center gap-4 bg-white/5 px-6 py-3 rounded-full border border-white/5 backdrop-blur-md transition-colors hover:bg-white/10 hover:border-white/10">
+              <span className="w-1.5 h-1.5 bg-white/40 rounded-full"></span>
+              <span className="text-white/60 text-[9px] tracking-[0.2em]">
+                Archive Size: <span className="text-white ml-1">{movies.length} {movies.length === 1 ? 'Title' : 'Titles'}</span>
+              </span>
+            </div>
           </div>
         </footer>
       </main>
