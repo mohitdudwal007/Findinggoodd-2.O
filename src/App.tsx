@@ -5,6 +5,48 @@ import { auth, db } from './firebase';
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { collection, onSnapshot, doc, setDoc, deleteDoc, serverTimestamp, getDocFromServer, query, orderBy } from 'firebase/firestore';
 
+const CursorGlow = () => {
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [isHovering, setIsHovering] = useState(false);
+
+  useEffect(() => {
+    const updateMousePosition = (e: MouseEvent) => {
+      setMousePosition({ x: e.clientX, y: e.clientY });
+      
+      const target = e.target as HTMLElement;
+      setIsHovering(
+        target.tagName.toLowerCase() === 'button' ||
+        target.tagName.toLowerCase() === 'a' ||
+        target.closest('button') != null ||
+        target.closest('a') != null
+      );
+    };
+
+    window.addEventListener('mousemove', updateMousePosition);
+    return () => {
+      window.removeEventListener('mousemove', updateMousePosition);
+    };
+  }, []);
+
+  return (
+    <motion.div
+      className="pointer-events-none fixed top-0 left-0 z-[1] rounded-full mix-blend-screen will-change-transform"
+      animate={{
+        x: mousePosition.x - 200,
+        y: mousePosition.y - 200,
+        scale: isHovering ? 1.4 : 1,
+        opacity: isHovering ? 1 : 0.6
+      }}
+      transition={{ type: 'tween', ease: 'backOut', duration: 0.4 }}
+      style={{
+        width: 400,
+        height: 400,
+        background: 'radial-gradient(circle closest-side, rgba(255,255,255,0.06) 0%, transparent 100%)',
+      }}
+    />
+  );
+};
+
 enum OperationType {
   CREATE = 'create',
   UPDATE = 'update',
@@ -141,36 +183,37 @@ const Navbar = ({
       initial={{ y: -50, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-      className="fixed top-0 w-full z-50 px-12 py-8 flex items-center justify-between border-b border-white/5 bg-[#050505]/80 backdrop-blur-md"
+      className="fixed top-0 w-full z-50 px-12 py-8 flex items-center justify-between border-b border-white/5 bg-[#050505]/40 backdrop-blur-3xl"
     >
       <div 
         onClick={handleBrandClick}
-        className={`text-2xl font-display font-black tracking-tighter uppercase transition-opacity cursor-pointer select-none ${isSearchOpen ? 'opacity-0 hidden md:block' : 'opacity-100'}`}
+        className={`text-2xl font-display font-black tracking-tight uppercase transition-opacity cursor-pointer select-none drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] ${isSearchOpen ? 'opacity-0 hidden md:block' : 'opacity-100'} group relative overflow-hidden flex items-center justify-center`}
       >
-        {siteName}
+        <span className="relative z-10">{siteName}</span>
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-[150%] skew-x-12 group-hover:animate-[shimmer_2s_infinite] pointer-events-none"></div>
       </div>
       
       <div className="flex-1 flex justify-end">
         <motion.div 
           layout
           initial={false}
-          transition={{ type: "spring", stiffness: 500, damping: 35 }}
-          className={`flex items-center overflow-hidden ${isSearchOpen ? 'w-full md:w-96 bg-[#111] border border-white/10 rounded-none px-4 py-2' : 'w-auto h-auto'}`}
+          transition={{ type: "spring", stiffness: 400, damping: 30 }}
+          className={`flex items-center transition-colors rounded-full ${isSearchOpen ? 'w-full md:w-96 bg-[#1a1a1a]/80 backdrop-blur-md border border-white/10 px-5 py-3 shadow-[0_0_30px_rgba(255,255,255,0.05)] overflow-hidden' : 'w-auto h-auto'}`}
         >
           <button 
             onClick={() => setIsSearchOpen(!isSearchOpen)}
-            className={`${isSearchOpen ? 'text-white shrink-0' : 'text-white/50 hover:text-white shrink-0'} transition-colors mt-1`}
+            className={`${isSearchOpen ? 'text-white hover:bg-white/10 w-10 h-10 shrink-0 flex items-center justify-center rounded-full' : 'text-white/50 hover:text-white shrink-0 bg-white/5 w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10'} transition-all`}
           >
-            {isSearchOpen ? <X size={18} strokeWidth={2} /> : <Search size={20} strokeWidth={2} />}
+            {isSearchOpen ? <X size={18} strokeWidth={2} /> : <Search size={18} strokeWidth={2} />}
           </button>
           
           <AnimatePresence>
             {isSearchOpen && (
               <motion.input
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 10 }}
-                transition={{ duration: 0.3, ease: 'easeOut' }}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
                 type="text"
                 autoFocus
                 placeholder="Search movies or genres..."
@@ -184,12 +227,13 @@ const Navbar = ({
       </div>
 
       {!isSearchOpen && (
-        <div className="flex gap-8 items-center text-[10px] font-bold uppercase tracking-[0.2em] text-white/50 ml-8">
-          <button onClick={onRequestClick} className="hover:text-white transition-colors border border-white/20 px-4 py-2 text-[8px] md:text-[10px]">
-            Request Movie
+        <div className="flex gap-4 md:gap-8 items-center text-xs font-bold uppercase tracking-[0.2em] text-white/50 ml-4 md:ml-8">
+          <button onClick={onRequestClick} className="relative group overflow-hidden border border-white/20 px-5 py-2.5 text-[9px] md:text-[11px] transition-all hover:border-white/40 hover:text-white bg-white/5 hover:bg-white/10 rounded-full">
+            <span className="relative z-10 tracking-widest leading-none">Request Movie</span>
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-[150%] skew-x-12 group-hover:animate-[shimmer_1.5s_infinite] pointer-events-none"></div>
           </button>
-          <button className="hover:text-white transition-colors hidden md:block">
-            <Menu size={20} strokeWidth={2} />
+          <button className="hover:text-white transition-all hover:scale-110 bg-white/5 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-full hidden md:flex border border-transparent hover:bg-white/10 hover:border-white/10">
+            <Menu size={18} strokeWidth={2} />
           </button>
         </div>
       )}
@@ -199,8 +243,20 @@ const Navbar = ({
 
 const Hero = () => (
   <section className="relative h-[70vh] min-h-[600px] flex items-center px-6 md:px-12 xl:px-24 overflow-hidden mb-12 border-b border-white/5">
-    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/[0.04] via-transparent to-transparent"></div>
-    <div className="absolute -left-4 top-24 text-[120px] lg:text-[180px] font-display font-black text-white/5 select-none pointer-events-none z-0 tracking-tighter">FEATURED</div>
+    
+    <div className="absolute inset-0 bg-[#050505] z-0">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,_rgba(255,255,255,0.08)_0%,_transparent_60%)]"></div>
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]"></div>
+    </div>
+    
+    <motion.div 
+      initial={{ opacity: 0, x: -100 }}
+      animate={{ opacity: 0.04, x: -20 }}
+      transition={{ duration: 1.5, ease: "easeOut" }}
+      className="absolute -left-12 top-1/2 -translate-y-1/2 text-[150px] lg:text-[280px] font-display font-black italic text-white select-none pointer-events-none z-0 tracking-widest leading-none whitespace-nowrap"
+    >
+      THE ARCHIVE
+    </motion.div>
     
     <div className="max-w-5xl relative z-10 w-full mt-24">
       <motion.div 
@@ -219,10 +275,10 @@ const Hero = () => (
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-        className="text-6xl md:text-8xl lg:text-[10rem] font-display font-light tracking-tight leading-[0.85] mb-8"
+        className="text-6xl md:text-8xl lg:text-[10rem] font-display font-medium tracking-tight leading-[0.85] mb-8"
       >
         Download <br /> 
-        <span className="font-black text-transparent bg-clip-text bg-gradient-to-b from-white via-white/90 to-white/30 drop-shadow-[0_10px_20px_rgba(255,255,255,0.1)]">
+        <span className="font-black italic text-transparent bg-clip-text bg-gradient-to-b from-white via-white/90 to-white/30 drop-shadow-[0_10px_20px_rgba(255,255,255,0.1)]">
           The Void.
         </span>
       </motion.h1>
@@ -762,10 +818,10 @@ const AdminDashboard = ({
                     <p className="text-[10px] text-white/40 tracking-wide font-bold">{m.year} • {m.genre}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => handleEdit(m)} className="p-3 text-white/50 hover:text-white hover:bg-white/10 transition-all duration-300 border border-transparent hover:border-white/20">
+                    <button onClick={() => handleEdit(m)} className="w-10 h-10 flex items-center justify-center rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-all duration-300 border border-transparent hover:border-white/20">
                       <Edit size={18} />
                     </button>
-                    <button onClick={() => handleDelete(m.id)} className="p-3 text-red-500/50 hover:text-red-500 hover:bg-red-500/10 transition-all duration-300 border border-transparent hover:border-red-500/20">
+                    <button onClick={() => handleDelete(m.id)} className="w-10 h-10 flex items-center justify-center rounded-full text-red-500/50 hover:text-red-500 hover:bg-red-500/10 transition-all duration-300 border border-transparent hover:border-red-500/20">
                        <Trash2 size={18} />
                     </button>
                   </div>
@@ -998,7 +1054,7 @@ const AdBannerModal = ({ movie, settings, onClose }: { movie: Movie, settings: a
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-[100] bg-[#050505]/98 flex flex-col items-center justify-center p-4 md:p-6"
     >
-      <button onClick={onClose} className="absolute top-4 right-4 md:top-8 md:right-12 text-white/50 hover:text-white transition-colors duration-300 z-50 bg-[#111] p-2 rounded-full border border-white/10">
+      <button onClick={onClose} className="absolute top-4 right-4 md:top-8 md:right-12 text-white/50 hover:text-white transition-colors duration-300 z-50 bg-[#111] w-10 h-10 flex items-center justify-center rounded-full border border-white/10">
         <X size={20} className="md:w-6 md:h-6" />
       </button>
 
@@ -1046,7 +1102,7 @@ const WatchModal = ({ movie, onClose }: { movie: Movie, onClose: () => void }) =
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-[100] bg-[#050505]/98 flex flex-col items-center justify-center p-4 md:p-12 backdrop-blur-3xl"
     >
-      <button onClick={onClose} className="absolute top-6 right-6 md:top-10 md:right-10 text-white/50 hover:text-white hover:scale-110 active:scale-95 transition-all duration-300 z-50 bg-[#111] p-3 rounded-full border border-white/10 shadow-[0_0_20px_rgba(255,255,255,0.05)]">
+      <button onClick={onClose} className="absolute top-6 right-6 md:top-10 md:right-10 text-white/50 hover:text-white hover:scale-110 active:scale-95 transition-all duration-300 z-50 bg-[#111] w-12 h-12 flex items-center justify-center rounded-full border border-white/10 shadow-[0_0_20px_rgba(255,255,255,0.05)]">
         <X size={20} />
       </button>
 
@@ -1143,7 +1199,7 @@ const MovieCard: React.FC<{ movie: Movie, index: number, onDownloadClick: (movie
             {movie.watchLink && (
               <button 
                 onClick={() => onWatchClick(movie)}
-                className="flex-1 bg-white/5 border border-white/10 hover:bg-white hover:text-black transition-all duration-300 py-3 md:py-2.5 text-[9px] tracking-widest uppercase font-bold flex items-center justify-center gap-2 text-white/90 hover:shadow-[0_0_15px_rgba(255,255,255,0.4)] rounded-sm"
+                className="flex-1 bg-white/5 border border-white/10 hover:bg-white hover:text-black transition-all duration-300 py-3 md:py-3 text-[10px] tracking-widest uppercase font-bold flex items-center justify-center gap-2 text-white/90 rounded-sm"
               >
                 <Play size={12} fill="currentColor" />
                 <span>Watch</span>
@@ -1151,7 +1207,7 @@ const MovieCard: React.FC<{ movie: Movie, index: number, onDownloadClick: (movie
             )}
             <button 
               onClick={() => onDownloadClick(movie)}
-              className={`flex-1 border border-white/10 hover:bg-white/10 transition-all duration-300 py-3 md:py-2.5 text-[9px] tracking-widest uppercase font-bold flex items-center justify-center gap-2 rounded-sm ${movie.watchLink ? 'text-white/50' : 'text-white bg-white/5 hover:text-white/90 hover:shadow-[0_0_15px_rgba(255,255,255,0.1)]'}`}
+              className={`flex-1 border border-white/10 hover:bg-white/10 transition-all duration-300 py-3 md:py-3 text-[10px] tracking-widest uppercase font-bold flex items-center justify-center gap-2 rounded-sm ${movie.watchLink ? 'text-white/50' : 'text-white bg-white/5 hover:text-white/90'}`}
             >
               <Download size={12} />
               <span>Get</span>
@@ -1292,6 +1348,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#050505] text-[#e0e0e0] font-sans overflow-x-hidden relative selection:bg-white selection:text-black">
+      <CursorGlow />
       <div className="fixed inset-0 pointer-events-none bg-noise opacity-[0.03] z-[100] mix-blend-overlay"></div>
       <Navbar 
         searchQuery={searchQuery} 
@@ -1338,12 +1395,13 @@ export default function App() {
         <Hero />
         
         <section className="px-6 md:px-12 xl:px-24 pb-24">
-          <div className="flex flex-col md:flex-row md:justify-between md:items-end mb-8 border-b border-white/5 pb-4 gap-4">
-            <h2 className="text-2xl font-display font-black tracking-tighter uppercase">
+          <div className="flex flex-col md:flex-row md:justify-between md:items-end mb-8 border-b border-white/5 pb-4 gap-4 relative">
+            <h2 className="text-2xl md:text-3xl font-display font-black tracking-tighter uppercase relative group">
               Latest Additions
+              <span className="absolute -inset-1 bg-gradient-to-r from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 blur transition-opacity duration-500"></span>
             </h2>
-            <button className="hidden md:flex text-white/40 hover:text-white transition-colors items-center gap-2 text-[10px] uppercase tracking-[0.2em] font-bold group">
-              View All <span className="text-lg leading-none transition-transform group-hover:translate-x-1">→</span>
+            <button className="hidden md:flex text-white/40 hover:text-white transition-colors items-center gap-2 text-[10px] uppercase tracking-[0.2em] font-bold group border border-transparent hover:border-white/10 px-4 py-2 rounded-full hover:bg-white/5">
+              View All <motion.span animate={{ x: [0, 5, 0] }} transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }} className="text-lg leading-none">→</motion.span>
             </button>
           </div>
           
@@ -1354,7 +1412,7 @@ export default function App() {
                 <button
                   key={genre}
                   onClick={() => setSelectedGenre(genre)}
-                  className={`snap-center shrink-0 px-5 py-2.5 rounded-full text-[10px] uppercase tracking-widest font-bold transition-all duration-300 border ${selectedGenre === genre ? 'bg-white text-black border-white' : 'bg-[#111] text-white/50 border-white/10 hover:border-white/30 hover:text-white'}`}
+                  className={`snap-center shrink-0 px-6 py-3 rounded-full text-[10px] uppercase tracking-widest font-bold transition-all duration-500 border ${selectedGenre === genre ? 'bg-[#FFD700] text-black border-[#FFD700] shadow-[0_0_20px_rgba(255,215,0,0.4)] scale-105' : 'bg-white/5 text-white/40 border-transparent hover:border-white/10 hover:text-white hover:bg-white/10'}`}
                 >
                   {genre}
                 </button>
